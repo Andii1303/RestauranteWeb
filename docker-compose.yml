@@ -1,0 +1,25 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: contraseñaroot
+      MYSQL_DATABASE: restauranteDB
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: contraseñadb
+    ports:
+      - "3308:3306"
+
+  backend:
+    build: .
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: usuario
+      DB_PASSWORD: contraseñadb
+      DB_NAME: restauranteDB
+    depends_on:
+      - db
+    ports:
+      - "4000:4000"
