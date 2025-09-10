@@ -2,10 +2,11 @@ services:
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: contraseñaroot
+      MYSQL_ROOT_PASSWORD: Root12345!
+      MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: restauranteDB
-      MYSQL_USER: usuario
-      MYSQL_PASSWORD: contraseñadb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: App12345!
     ports:
       - "3308:3306"
 
@@ -16,8 +17,8 @@ services:
       PORT: 4000
       DB_HOST: db
       DB_PORT: 3306
-      DB_USER: usuario
-      DB_PASSWORD: contraseñadb
+      DB_USER: appuser
+      DB_PASSWORD: App12345!
       DB_NAME: restauranteDB
     depends_on:
       - db
