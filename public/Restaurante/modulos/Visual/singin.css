@@ -1,0 +1,35 @@
+    body {
+        background-image: url('/Imajenes/fondo2.jpg');
+        background-size: cover;                   
+        background-position: center;              
+        background-repeat: no-repeat;             
+        background-attachment: fixed;    
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .register-box {
+      background-color: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      width: 1500%;
+      max-width: 600px;
+      margin-top: 100px;
+      margin-left: 10px;
+      margin-bottom: 100px;
+    }
+    .register-box h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .form-control:focus {
+      box-shadow: none;
+      border-color: #0072ff;
+    }
+    .btn-primary {
+      background-color: #0072ff;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #0056cc;
+    }

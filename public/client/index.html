@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Restaurante - Cliente</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Bienvenido al Restaurante</h1>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="#menu">Menú</a>
+      <a href="#reservas">Reservar</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </header>
+  <main>
+    <section id="menu">
+      <h2>Menú</h2>
+      <!-- Aquí puedes mostrar los platos y productos -->
+    </section>
+    <section id="reservas">
+      <h2>Reservar una mesa</h2>
+      <form id="reservaForm">
+        <!-- Campos para la reserva -->
+        <label>Nombre: <input name="nombre" required></label><br>
+        <label>Teléfono: <input name="telefono" required></label><br>
+        <label>Fecha y hora: <input name="fecha" type="datetime-local" required></label><br>
+        <label>Comensales: <input name="comensales" type="number" min="1" value="1" required></label><br>
+        <button type="submit">Reservar</button>
+      </form>
+      <div id="resultado"></div>
+    </section>
+    <section id="contacto">
+      <h2>Contacto</h2>
+      <p>Teléfono: 555-1234</p>
+      <p>Email: info@restaurante.com</p>
+    </section>
+  </main>
+  <footer>
+    <small>&copy; 2025 Restaurante</small>
+  </footer>
+  <script src="main.js"></script>
+</body>
+</html>

@@ -1,7 +1,4 @@
 {
-  "name": "backwebapp",
-  "version": "1.0.0",
-  "description": "",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
@@ -9,6 +6,9 @@
     "dev": "nodemon --watch src --ext js --exec node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "name": "backwebapp",
+  "version": "1.0.0",
+  "description": "",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -22,5 +22,3 @@
     "nodemon": "^3.1.10"
   }
 }
-
-

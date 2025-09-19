@@ -1,13 +1,24 @@
-import 'dotenv/config';
-import express from 'express';
-import { ping, pool } from './db.js';
-import cors from 'cors';
+import 'dotenv/config'            // carga .env
+import express from "express";
+import cors from "cors";
+
+import path from "path";
+import { fileURLToPath } from "url";
+import reservasRouter from "./routes/reservas.routes.js";
+
 
 const app = express();
-const PORT = process.env.PORT || 4000;
-const FRONT_ORIGIN = process.env.FRONT_ORIGIN || 'http://localhost:5173';
 
-app.use(cors({ origin: FRONT_ORIGIN }));
+// Servir archivos estáticos desde /public
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.join(__dirname, "../public")));
+
+// Ruta principal para la interfaz de cliente
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/client/index.html"));
+});
+
+app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
@@ -23,7 +34,7 @@ app.get('/db/ping', async (req, res) => {
   }
 });
 
-// Example route to list tables
+// Listar tablas
 app.get('/db/tables', async (req, res) => {
   try {
     const [rows] = await pool.query('SHOW TABLES');
@@ -33,6 +44,10 @@ app.get('/db/tables', async (req, res) => {
   }
 });
 
+// Montar rutas de reservas
+app.use(reservasRouter);
+
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Backend listening on port ${PORT}`);
 });

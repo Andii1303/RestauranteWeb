@@ -1,26 +1,44 @@
+
 services:
   db:
     image: mysql:8.0
+    container_name: restaurante-db
     environment:
-      MYSQL_ROOT_PASSWORD: Root12345!
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_ROOT_HOST: "%"
-      MYSQL_DATABASE: restauranteDB
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: App12345!
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TZ}
     ports:
       - "3308:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - dbdata:/var/lib/mysql
 
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: restaurante-api
+    env_file: .env
     environment:
-      NODE_ENV: development
-      PORT: 4000
       DB_HOST: db
       DB_PORT: 3306
-      DB_USER: appuser
-      DB_PASSWORD: App12345!
-      DB_NAME: restauranteDB
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+      PORT: 4000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "4000:4000"
+    restart: unless-stopped
+
+volumes:
+  dbdata:
