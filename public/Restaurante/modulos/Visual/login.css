@@ -1,0 +1,33 @@
+body {
+      background-image: url("imajenes/fondo3.jpg");
+      background-size: cover;                               
+      background-repeat: no-repeat;             
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .login-box {
+      background-color: rgba(243, 240, 224, 0.99);
+      padding: 40px;
+      margin-top: 40px;
+      margin-left: 510px;
+      margin-bottom: 100px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(229, 7, 7, 0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+    .login-box h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .form-control:focus {
+      box-shadow: none;
+      border-color: #2575fc;
+    }
+    .btn-primary {
+      background-color: #2575fc;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #1a5edb;
+    }
