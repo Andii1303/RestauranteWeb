@@ -1,14 +1,25 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import 'dotenv/config';
 import express from 'express';
 import { ping, pool } from './db.js';
 import cors from 'cors';
 
+
 const app = express();
 const PORT = process.env.PORT || 4000;
-const FRONT_ORIGIN = process.env.FRONT_ORIGIN || 'http://localhost:5173';
 
-app.use(cors({ origin: FRONT_ORIGIN }));
+// Definir __dirname en ES Modules
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+app.use(express.static(path.join(__dirname, "../public")));
+app.use(cors());
 app.use(express.json());
+
+// Ruta principal para la interfaz de cliente
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/client/index.html"));
+});
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
