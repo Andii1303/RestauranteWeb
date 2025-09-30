@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev || npm install --omit=dev
 
 COPY src ./src
+COPY public ./public
 
 ENV PORT=4000
 EXPOSE 4000
