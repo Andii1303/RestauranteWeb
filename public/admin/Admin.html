@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administración</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="./Styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+  <a class="navbar-brand" href="/cliente/index.html">MiRestaurante</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarContenido">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" href="/cliente/index.html">Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/cliente/menu.html">Comidas</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="modulos/reservas.html">Reservas</a>
+        </li>
+      </ul>
+          <!-- Carrito de compras -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="/carrito">
+          <i class="fas fa-shopping-cart"></i> Carrito
+          <span class="badge badge-pill badge-danger">0</span> <!-- Número de productos -->
+        </a>
+      </li>
+    </ul>
+
+      <!-- Contenedor flexible para búsqueda y botones -->
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- Barra de búsqueda -->
+        <form class="d-flex" role="search">
+          <input class="form-control me-2" type="search" placeholder="Buscar..." aria-label="Buscar">
+          <button class="btn btn-outline-light" type="submit">Buscar</button>
+        </form>
+
+    <!-- Botón de Cerrar sesión solo para admin -->
+    <button id="logoutBtn" class="btn btn-danger">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <div class="bg-dark text-white p-3" style="width: 250px; min-height: 100vh;">
+      <h4 class="mb-4">Panel de Administración</h4>
+
+      <h6>Administrar</h6>
+      <ul class="nav flex-column mb-3">
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('menu')">Menú</a></li>
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('ingredientes')">Ingredientes</a></li>
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('Productos')">Productos</a></li>
+        <li><a href="../admin/formUser.html" class="nav-link text-white" onclick="mostrarSeccion('usuarios')">usuarios</a></li>
+      </ul>
+
+      <h6>Reportes</h6>
+      <ul class="nav flex-column mb-3">
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('ventas')">Ventas</a></li>
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('inventario')">Inventario</a></li>
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('alertas')">Alertas</a></li>
+      </ul>
+
+      <h6>Gestionar</h6>
+      <ul class="nav flex-column">
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('reservas')">Reservas</a></li>
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('pedidos')">Pedidos</a></li>
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('facturas')">Facturas</a></li>
+      </ul>
+    </div>
+
+    <!-- Secciones -->
+    <div class="p-4 flex-grow-1" id="contenido">
+      <!-- Sección Menú -->
+      <div id="menu" class="seccion" style="display: block;">
+        <h2 class="mb-4">Gestión de Menú</h2>
+        <form id="formPlato" class="row g-3 mb-4">
+          <input type="hidden" id="platoId" />
+          <div class="col-md-6">
+            <label for="nombre" class="form-label">Nombre del plato</label>
+            <input type="text" class="form-control" id="nombre" required />
+          </div>
+          <div class="col-md-6">
+            <label for="precio" class="form-label">Precio (Q)</label>
+            <input type="number" class="form-control" id="precio" required />
+          </div>
+          <div class="col-12">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcion" rows="2" required></textarea>
+          </div>
+          <div class="col-12">
+            <label for="fotografia" class="form-label">Fotografía (URL)</label>
+            <input type="url" class="form-control" id="fotografia" />
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <button type="reset" class="btn btn-secondary">Limpiar</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Fotografía</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaPlatos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sección Ingredientes -->
+      <div id="ingredientes" class="seccion" style="display: none;">
+        <h2 class="mb-4">Gestión de Ingredientes</h2>
+        <form id="formIngrediente" class="row g-3 mb-4">
+          <input type="hidden" id="ingredienteId" />
+          <div class="col-md-6">
+            <label for="nombreIngrediente" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="nombreIngrediente" required />
+          </div>
+          <div class="col-md-6">
+            <label for="unidad" class="form-label">Unidad de medida</label>
+            <input type="text" class="form-control" id="unidad" required />
+          </div>
+          <div class="col-md-6">
+            <label for="cantidad" class="form-label">Cantidad disponible</label>
+            <input type="number" class="form-control" id="cantidad" required />
+          </div>
+          <div class="col-md-6">
+            <label for="categoria" class="form-label">Categoría</label>
+            <input type="text" class="form-control" id="categoria" />
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <button type="reset" class="btn btn-secondary">Limpiar</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Unidad</th>
+                <th>Cantidad</th>
+                <th>Categoría</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaIngredientes"></tbody>
+          </table>
+        </div>
+      </div>
+      
+        <!-- Sección Usuarios -->
+      <div id="usuarios" class="seccion" style="display: none;">
+       <h2 class="mb-4">Gestión de Usuarios</h2>
+
+  <form id="formUsuario" class="row g-3 mb-4">
+    <input type="hidden" id="usuario" />
+
+    <div class="col-md-6">
+      <label for="nombre" class="form-label">Nombre</label>
+      <input type="text" class="form-control" id="nombre" required />
+    </div>
+
+    <div class="col-md-6">
+      <label for="correo" class="form-label">Correo</label>
+      <input type="email" class="form-control" id="correo" required />
+    </div>
+
+    <div class="col-md-6">
+      <label for="Contraseña" class="form-label">Contraseña</label>
+      <input type="password" class="form-control" id="Contraseña" required />
+    </div>
+
+  <div class="col-md-6">
+  <label for="rol" class="form-label">Rol</label>
+  <select class="form-select" id="rol" required>
+    <option value="">Selecciona un rol</option>
+    <option value="Administrador">Administrador</option>
+    <option value="Mesero">Mesero</option>
+    <option value="Cocinero">Cocinero</option>
+    <option value="Repartidor">Repartidor</option>
+  </select>
+</div>
+
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-success">Guardar</button>
+      <button type="reset" class="btn btn-secondary">Limpiar</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Contraseña</th>
+          <th>Rol</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaUsuarios"></tbody>
+    </table>
+  </div>
+      </div>
+
+    </div>
+  </div>
+
+
+
+
+  <!-- Scripts -->
+  <script src="./secciones.js"></script>
+  <script src="./menu.js"></script>
+  <script src="./ingredientes.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="./Scripusuarios.js"></script>
+  <script>
+    // Botón de logout para admin
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+        } catch {}
+        window.location.href = '/login/login.html';
+      });
+    }
+  </script>
+
+</body>
+<br>
+<br>
+<footer class="bg-dark text-white pt-4 pb-2">
+  <div class="container">
+    <div class="row">
+
+      <!-- Información de la empresa -->
+      <div class="col-md-6 mb-3">
+        <h5>Mirestaurante</h5>
+        <p>© 2025 Mirestaurante. Todos los derechos reservados.</p>
+      </div>
+
+      <!-- Enlaces -->
+      <div class="col-md-3 mb-3">
+        <h6>Información</h6>
+        <ul class="list-unstyled">
+          <li><a href="/quienes-somos.html" class="text-white text-decoration-none">Quiénes somos</a></li>
+          <li><a href="/vision.html" class="text-white text-decoration-none">Visión</a></li>
+          <li><a href="/mision.html" class="text-white text-decoration-none">Misión</a></li>
+        </ul>
+      </div>
+
+      <!-- Redes sociales -->
+      <div class="col-md-3 mb-3">
+        <h6>Síguenos</h6>
+        <a href="https://facebook.com" target="_blank" class="text-white me-3">
+          <i class="fab fa-facebook fa-lg"></i>
+        </a>
+        <a href="https://instagram.com" target="_blank" class="text-white me-3">
+          <i class="fab fa-instagram fa-lg"></i>
+        </a>
+        <a href="https://tiktok.com" target="_blank" class="text-white">
+          <i class="fab fa-tiktok fa-lg"></i>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</footer>
+</html>

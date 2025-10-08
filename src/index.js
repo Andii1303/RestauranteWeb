@@ -10,11 +10,13 @@ import authRouter from './routes/auth.routes.js';
 import { verifyToken, requireRole } from './middleware/auth.js';
 // Importa rutas de reservas (HEAD)
 import reservasRouter from './routes/reservas.routes.js';
+import usersRouter from './routes/users.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
 
 // CORS con credenciales para cookies JWT
 app.use(cors({ origin: true, credentials: true }));
@@ -51,26 +53,61 @@ async function ensureAuthSetup() {
   }
 }
 
+// Espera activa a que la base de datos responda antes de continuar (retry/backoff simple)
+async function waitForDatabase({ attempts = 12, delayMs = 2500 } = {}) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const [r] = await pool.query('SELECT 1 AS ok');
+      if (r && r[0]) {
+        console.log(`DB disponible (intento ${i}/${attempts})`);
+        return;
+      }
+    } catch (err) {
+      console.warn(`DB no disponible aún (intento ${i}/${attempts}): ${err.code || err.message}`);
+    }
+    if (i < attempts) {
+      await new Promise(res => setTimeout(res, delayMs));
+    }
+  }
+  throw new Error(`No se pudo conectar a la base de datos después de ${attempts} intentos.`);
+}
+
 // Rutas API (auth)
 app.use(authRouter);
+// Rutas de administración de usuarios
+app.use(usersRouter);
 
-// Estáticos por carpetas
-app.use('/manager', verifyToken, requireRole('ADMIN'), express.static(path.join(__dirname, '../public/manager')));
-app.use('/restaurante', express.static(path.join(__dirname, '../public/restaurante')));
-app.use('/views', express.static(path.join(__dirname, '../public/views')));
-app.use('/js', express.static(path.join(__dirname, '../public/js')));
-app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
-app.use('/css', express.static(path.join(__dirname, '../public/css')));
+// ================== SERVIDORES DE ESTÁTICOS ==================
+// Servir toda la carpeta public primero (para favicon, assets compartidos, etc.)
 app.use(express.static(path.join(__dirname, '../public')));
+// Alias específicos
+app.use('/client', express.static(path.join(__dirname, '../public/cliente')));
 
-// Página principal: interfaz cliente
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/restaurante/index.html'));
+// Normalizador de rutas de login: cualquier variante termina en /login/login.html
+app.use((req, res, next) => {
+  if (/^\/login($|\/$|\.html$)/i.test(req.path)) {
+    return res.redirect(302, '/login/login.html');
+  }
+  next();
+});
+app.use('/login', express.static(path.join(__dirname, '../public/login')));
+app.use('/admin', verifyToken, requireRole('ADMIN'), express.static(path.join(__dirname, '../public/admin')));
+
+// Favicon explícito (si existe public/favicon.ico)
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/favicon.ico'), err => {
+    if (err) res.status(204).end(); // silencioso si no existe
+  });
 });
 
-// Página de login (usa tu vista actual)
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/views/login.html'));
+// Redirección raíz directamente a menú cliente
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/cliente/menu.html'));
+});
+
+// Alias directo explícito (en caso de acceso antes del normalizador)
+app.get('/login.html', (req, res) => {
+  res.redirect(302, '/login/login.html');
 });
 
 app.get('/health', (req, res) => {
@@ -99,10 +136,24 @@ app.get('/db/tables', async (req, res) => {
 // Montar rutas de reservas (si existen)
 app.use(reservasRouter);
 
+// ================== 404 FINAL ==================
+app.use((req, res) => {
+  const notFound = path.join(__dirname, '../public/404.html');
+  return res.status(404).sendFile(notFound, err => {
+    if (err) res.status(404).json({ error: 'Recurso no encontrado' });
+  });
+});
+
 const PORT = process.env.PORT || 4000;
 
-// Inicializar todo y arrancar servidor (auth)
-await ensureAuthSetup();
-app.listen(PORT, () => {
-  console.log(`Backend listening on port ${PORT}`);
-});
+// Inicializar todo y arrancar servidor con espera de DB
+try {
+  await waitForDatabase();
+  await ensureAuthSetup();
+  app.listen(PORT, () => {
+    console.log(`Backend listening on port ${PORT}`);
+  });
+} catch (err) {
+  console.error('Fallo crítico al iniciar backend:', err.message);
+  process.exit(1);
+}

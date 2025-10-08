@@ -1,10 +1,39 @@
-# Node
-node_modules
+#########################
+# Node / Dependencias
+#########################
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-lock.yaml
-package-lock.json
+pnpm-debug.log*
 
-# Env
+# (Opcional) Ignorar lockfiles adicionales, comenta si quieres forzar consistencia
+# pnpm-lock.yaml
+# package-lock.json
+
+#########################
+# Variables de entorno
+#########################
 .env
+.env.local
+.env.*.local
+
+#########################
+# SO / Editor
+#########################
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+#########################
+# Builds / Coverage
+#########################
+dist/
+build/
+coverage/
+
+#########################
+# Otros
+#########################
+*.pid
