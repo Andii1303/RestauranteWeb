@@ -1,0 +1,19 @@
+.btn-agregar {
+  background-color: #FFD700;
+  color: #000000;            
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-agregar:hover {
+  background-color: #FFC107; /* Amarillo más intenso al pasar el mouse */
+  color: #000;
+}
+
+.card-img-top {
+  height: 150px;
+  object-fit: cover;
+}
