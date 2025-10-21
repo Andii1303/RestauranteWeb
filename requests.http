@@ -1,3 +1,66 @@
+### Autenticación
+POST http://localhost:4000/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@restaurante.com",
+  "password": "Admin123!"
+}
+
+### Listar unidades (público)
+GET http://localhost:4000/api/units
+
+### Crear ingrediente (ADMIN)
+POST http://localhost:4000/api/ingredients
+Content-Type: application/json
+
+{
+  "name": "Pechuga de pollo",
+  "unit_id": 2,
+  "stock_qty": 5000,
+  "min_qty": 500
+}
+
+### Listar ingredientes (ADMIN)
+GET http://localhost:4000/api/ingredients
+
+### Crear PRODUCTO (ADMIN)
+POST http://localhost:4000/api/menu-items
+Content-Type: application/json
+
+{
+  "type": "PRODUCTO",
+  "name": "Coca-Cola lata 355ml",
+  "description": "Bebida gaseosa",
+  "price": 8.50
+}
+
+### Crear PLATO (ADMIN)
+POST http://localhost:4000/api/menu-items
+Content-Type: application/json
+
+{
+  "type": "PLATO",
+  "name": "Pollo a la plancha",
+  "description": "Pechuga a la plancha",
+  "price": 45.00
+}
+
+### Reemplazar receta del PLATO (ADMIN)
+PUT http://localhost:4000/api/menu-items/2/recipe
+Content-Type: application/json
+
+{
+  "ingredients": [
+    { "ingredient_id": 1, "qty": 200 }
+  ]
+}
+
+### Obtener receta del PLATO (ADMIN)
+GET http://localhost:4000/api/menu-items/2/recipe
+
+### Listado público del menú (activos)
+GET http://localhost:4000/api/menu-items
 GET http://localhost:4000/health
 
 ###

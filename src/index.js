@@ -1,4 +1,4 @@
-import 'dotenv/config'; // carga variables de entorno
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -8,9 +8,13 @@ import bcrypt from 'bcryptjs';
 import { ping, pool } from './db.js';
 import authRouter from './routes/auth.routes.js';
 import { verifyToken, requireRole } from './middleware/auth.js';
-// Importa rutas de reservas (HEAD)
+
 import reservasRouter from './routes/reservas.routes.js';
 import usersRouter from './routes/users.routes.js';
+import ingredientsRouter from './routes/ingredients.routes.js';
+import menuRouter from './routes/menu.routes.js';
+import facturasRouter from './routes/facturas.routes.js';
+import mesasRouter from './routes/mesas.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,8 +80,14 @@ async function waitForDatabase({ attempts = 12, delayMs = 2500 } = {}) {
 app.use(authRouter);
 // Rutas de administración de usuarios
 app.use(usersRouter);
+// Rutas de ingredientes y menú
+app.use(ingredientsRouter);
+app.use(menuRouter);
+app.use(facturasRouter);
+app.use(mesasRouter);
+console.log('Rutas de ingredientes y menú montadas');
 
-// ================== SERVIDORES DE ESTÁTICOS ==================
+
 // Servir toda la carpeta public primero (para favicon, assets compartidos, etc.)
 app.use(express.static(path.join(__dirname, '../public')));
 // Alias específicos
@@ -110,6 +120,11 @@ app.get('/login.html', (req, res) => {
   res.redirect(302, '/login/login.html');
 });
 
+// Alias para la nueva sección de reservas en /public/reserve/reserve.html
+app.get('/reserve', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/reserve/reserve.html'));
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
@@ -133,10 +148,30 @@ app.get('/db/tables', async (req, res) => {
   }
 });
 
+// Debug: listar rutas registradas (no exponer en prod)
+app.get('/debug/routes', (req, res) => {
+  const routes = [];
+  app._router?.stack?.forEach((m) => {
+    if (m.route && m.route.path) {
+      const methods = Object.keys(m.route.methods).filter(Boolean);
+      routes.push({ path: m.route.path, methods });
+    } else if (m.name === 'router' && m.handle?.stack) {
+      m.handle.stack.forEach((h) => {
+        const route = h.route;
+        if (route?.path) {
+          const methods = Object.keys(route.methods).filter(Boolean);
+          routes.push({ path: route.path, methods });
+        }
+      });
+    }
+  });
+  res.json(routes);
+});
+
 // Montar rutas de reservas (si existen)
 app.use(reservasRouter);
 
-// ================== 404 FINAL ==================
+
 app.use((req, res) => {
   const notFound = path.join(__dirname, '../public/404.html');
   return res.status(404).sendFile(notFound, err => {

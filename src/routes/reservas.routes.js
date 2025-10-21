@@ -22,8 +22,8 @@ function toSqlDateTime(iso) {
 function mapAndValidatePayload(body) {
   const {
     mesas,
-    fechaReservaISO, // preferido
-    fecha, // opcional si ya viene en formato SQL
+    fechaReservaISO,
+    fecha,
     duracionMin,
     nombre,
     dni,
@@ -33,14 +33,13 @@ function mapAndValidatePayload(body) {
     descuento,
     items,
     usuario,
-    // soporte alternativo por si viene anidado
     cliente,
   } = body || {};
 
   const mesasCsv = typeof mesas === "string" ? mesas.trim() : "";
   if (!mesasCsv) return { error: "El campo 'mesas' es requerido y no puede estar vacío." };
 
-  // fecha -> prioriza fechaReservaISO; si no, usa fecha ya en SQL
+  // fecha
   let fechaSql = null;
   if (fechaReservaISO) {
     fechaSql = toSqlDateTime(fechaReservaISO);
@@ -140,6 +139,31 @@ router.get("/api/ping-reserva", async (req, res) => {
 
   const result = await ejecutarSpCrearReservaConFactura(prueba);
   res.status(result.status).json(result.body);
+});
+
+// === Minimalista: seleccionar mesa y crear reserva BORRADOR ===
+// POST /api/reservas/draft { mesa_id }
+router.post('/api/reservas/draft', async (req, res) => {
+  try {
+    const mesaId = String(req.body?.mesa_id || '').trim();
+    if (!mesaId) return res.status(400).json({ ok: false, message: 'mesa_id requerido' });
+    const [r] = await pool.query('INSERT INTO reservas (mesa_id, status) VALUES (?, "BORRADOR")', [mesaId]);
+    res.status(201).json({ ok: true, id: r.insertId, mesa_id: mesaId });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+// Alias GET muy simple: /api/reservas/draft/:mesaId
+router.get('/api/reservas/draft/:mesaId', async (req, res) => {
+  try {
+    const mesaId = String(req.params.mesaId || '').trim();
+    if (!mesaId) return res.status(400).json({ ok: false, message: 'mesaId requerido' });
+    const [r] = await pool.query('INSERT INTO reservas (mesa_id, status) VALUES (?, "BORRADOR")', [mesaId]);
+    res.status(201).json({ ok: true, id: r.insertId, mesa_id: mesaId });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
 });
 
 export default router;

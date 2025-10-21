@@ -27,7 +27,7 @@
           <a class="nav-link" href="menu.html">Comidas</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Reservas</a>
+          <a class="nav-link" href="/reserve/reserve.html">Reservas</a>
         </li>
       </ul>
 
@@ -75,92 +75,80 @@
     <h1 class="mb-4 text-center">Favorito Entre Nuestro Clientes</h1>
 
    <div class="container py-4">
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6 g-4">
-      
-      <div class="col">
-        <div class="card h-100">
-          <img src="../imagenes/Comida/Beef-Tacos.webp" class="card-img-top" alt="Comida 1">
-          <div class="card-body text-center">
-            <h5 class="card-title">Taco Especial</h5>
-            <p class="card-text">Delicioso taco con carne asada y guacamole.</p>
-            <button class="btn btn-agregar">Agregar</button>
-          </div>
-        </div>
-      </div>
-
-          <div class="col">
-        <div class="card h-100">
-          <img src="../Imajenes/Comida/1756328659_PNG Website corporativo 640x640.png" class="card-img-top" alt="Comida 1">
-          <div class="card-body text-center">
-            <h5 class="card-title">Hamburquesa Clasica</h5>
-            <p class="card-text">Deliciosa hamburquesa con pan claisco y po;;o crispi.</p>
-            <button class="btn btn-agregar">Agregar</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="card h-100">
-          <img src="../Imajenes/Comida/D_NQ_NP_996012-MLU73786039324_012024-O.webp" class="card-img-top" alt="Comida 1">
-          <div class="card-body text-center">
-            <h5 class="card-title">Papas Fritas</h5>
-            <p class="card-text">Papas Tradicionales a la Francesa.</p>
-            <button class="btn btn-agregar">Agregar</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="card h-100">
-          <img src="../Imajenes//Comida/e7147bb36b47b976ce4bd91160a90efe.avif" class="card-img-top" alt="Comida 1">
-          <div class="card-body text-center">
-            <h5 class="card-title">Pollo Frito</h5>
-            <p class="card-text">Pallo tradicional de la casa</p>
-            <button class="btn btn-agregar">Agregar</button>
-          </div>
-        </div>
-      </div>
-
-          <div class="col">
-        <div class="card h-100">
-          <img src="../Imajenes/Comida/images.jpeg" class="card-img-top" alt="Comida 1">
-          <div class="card-body text-center">
-            <h5 class="card-title">Pizza de Peperoni</h5>
-            <p class="card-text">Piza mediana de 6 porciones de Peperoni.</p>
-            <button class="btn btn-agregar">Agregar</button>
-          </div>
-        </div>
-      </div>
-
-
-    </div>
+    <div id="menu-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4"></div>
+    <div id="menu-empty" class="text-center text-muted mt-3" style="display:none;">No hay platos disponibles por el momento.</div>
+    <div id="menu-error" class="text-center text-danger mt-3" style="display:none;">No se pudo cargar el menú.</div>
   </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     const cartCount = document.getElementById('cart-count');
     let count = parseInt(localStorage.getItem('cartCount')) || 0;
     cartCount.textContent = count;
 
     let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
-    document.querySelectorAll('.btn-agregar').forEach(button => {
-      button.addEventListener('click', () => {
-        const nombre = button.getAttribute('data-nombre') || 'Producto';
+    const grid = document.getElementById('menu-grid');
+    const emptyMsg = document.getElementById('menu-empty');
+    const errorMsg = document.getElementById('menu-error');
+    const fmtQ = v => `Q${Number(v || 0).toFixed(2)}`;
+    try {
+  const res = await fetch('/api/menu-items?includeUnavailable=1'); // incluir activos aunque no tengan stock
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const items = await res.json();
+      if (!items.length) { emptyMsg.style.display = 'block'; return; }
+      grid.innerHTML = items.map(it => `
+        <div class="col">
+          <div class="card h-100">
+            ${it.photo_url ? `<img src="${it.photo_url}" class="card-img-top" alt="${it.name}">` : `<div class="bg-light" style="height:180px;"></div>`}
+            <div class="card-body d-flex flex-column text-center">
+              <h5 class="card-title">${it.name}</h5>
+              <p class="card-text">${(it.description||'').substring(0,120)}</p>
+              <div class="mt-auto d-flex align-items-center justify-content-between">
+                <span class="text-primary fw-bold">${fmtQ(it.price)}</span>
+                ${it.available ? `<button class="btn btn-agregar btn-sm" data-nombre="${it.name}">Agregar</button>` : `<span class="badge bg-secondary">Sin stock</span>`}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
 
-        // Actualizar contador
-        count++;
-        cartCount.textContent = count;
-        localStorage.setItem('cartCount', count);
-
-        // Guardar producto en carrito
-        carrito.push({ nombre });
-        localStorage.setItem('carrito', JSON.stringify(carrito));
-
-        
-        window.location.href = "carrito.html";
+      grid.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-agregar');
+        if (!btn) return;
+        const nombre = btn.getAttribute('data-nombre') || 'Producto';
+        // Si existe una factura en curso, agregar detalle directo
+        const facturaId = localStorage.getItem('facturaId');
+        if (facturaId) {
+          try {
+            // Buscar el item para conocer precio y id
+            const it = items.find(x => x.name === nombre);
+            const payload = {
+              menu_item_id: it?.id || null,
+              nombre,
+              cantidad: 1,
+              precio_unit: Number(it?.price || 0),
+              item_type: it?.type || 'PLATO'
+            };
+            const r = await fetch(`/api/facturas/${encodeURIComponent(facturaId)}/detalles`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (!r.ok) throw new Error('No se pudo agregar a la factura');
+            count++; cartCount.textContent = count; localStorage.setItem('cartCount', count);
+          } catch (err) {
+            alert('No se pudo agregar a la factura: ' + err.message);
+          }
+        } else {
+          // Flujo actual de carrito
+          count++; cartCount.textContent = count; localStorage.setItem('cartCount', count);
+          carrito.push({ nombre }); localStorage.setItem('carrito', JSON.stringify(carrito));
+          window.location.href = 'carrito.html';
+        }
       });
-    });
+    } catch (err) {
+      console.error('Menu page error', err);
+      errorMsg.style.display = 'block';
+    }
   });
 </script>
 

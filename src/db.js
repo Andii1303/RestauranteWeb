@@ -1,12 +1,14 @@
+// Conexión a MySQL para el backend
+
 import mysql from "mysql2/promise";
 
+// Si necesitas inicializar la base de datos, ejecuta los scripts SQL directamente.
 const {
-  // Defaults pensados para correr DENTRO de Docker Compose
   DB_HOST = "db",
   DB_PORT = "3306",
   DB_USER = "appuser",
   DB_PASSWORD = "App12345!",
-  DB_NAME = "proyectoWeb",   // tu esquema activo
+  DB_NAME = "restauranteDB",
 } = process.env;
 
 export const pool = mysql.createPool({
@@ -20,17 +22,10 @@ export const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+// Helper opcional para ping
 export async function ping() {
   const [rows] = await pool.query(
     "SELECT 1 AS ok, DATABASE() AS db, NOW() AS now;"
   );
-  return rows[0]; // { ok: 1, db: '...', now: '...' }
-}
-
-// Opcional: helper para SPs
-export async function callSP(spName, params = []) {
-  const placeholders = params.map(() => "?").join(",");
-  const sql = `CALL ${spName}(${placeholders})`;
-  const [rows] = await pool.query(sql, params);
-  return rows;
+  return rows[0];
 }

@@ -25,7 +25,7 @@
           <a class="nav-link" href="/cliente/menu.html">Comidas</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="modulos/reservas.html">Reservas</a>
+          <a class="nav-link" href="/reserve/reserve.html">Reservas</a>
         </li>
       </ul>
           <!-- Carrito de compras -->
@@ -54,7 +54,7 @@
 </nav>
 
 
-      <!-- Carrusel de imajenes -->
+  <!-- Carrusel de imágenes -->
 <div class="container my-5">
   <div id="carouselCentral" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-inner">
@@ -78,50 +78,19 @@
 </div>
 
 <div class="container my-5">
-  <h2 class="text-center mb-4 text-dark"></h2>
-  <h1> Lo Mas Vendido</h1>
-  <div class="row row-cols-1 row-cols-md-3 g-4">
-<br>
-    <!-- Card 1 -->
-    <div class="col">
-      <div class="card h-100 shadow">
-        <img src="../Imajenes/producto1.jpg" class="card-img-top" alt="Producto 1">
-        <div class="card-body">
-          <h5 class="card-title">hamburguesa</h5>
-          <p class="card-text">Deliciosa Hamburguesa Tejana con carne de Res y tocino</p>
-          <p class="text-primary fw-bold">Q75.00</p>
-          <a href="modulos/comida.html" class="btn btn-amarillo w-100">Comprar</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 2 -->
-    <div class="col">
-      <div class="card h-100 shadow">
-        <img src="../Imajenes/produc2.jpeg" class="card-img-top" alt="Producto 2">
-        <div class="card-body">
-          <h5 class="card-title">Milshake</h5>
-          <p class="card-text">Prueba nuestros Milshake de Fresa, banano, Chocolate</p>
-          <p class="text-primary fw-bold">Q25.00</p>
-          <a href="modulos/comida.html" class="btn btn-amarillo w-100">Comprar</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 3 -->
-    <div class="col">
-      <div class="card h-100 shadow">
-        <img src="../Imajenes/produc3.jpg" class="card-img-top" alt="Producto 3">
-        <div class="card-body">
-          <h5 class="card-title">Panini</h5>
-          <p class="card-text">Lechuga romana, pollo a la parrilla y aderezo casero.</p>
-          <p class="text-primary fw-bold">Q50.00</p>
-          <a href="modulos/comida.html" class="btn btn-amarillo w-100">Comprar</a>
-        </div>
-      </div>
-    </div>
-
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="m-0">Menú disponible</h1>
+    <a href="/cliente/menu.html" class="btn btn-warning text-dark">Ver todo el menú</a>
   </div>
+  <div id="home-menu-grid" class="row row-cols-1 row-cols-md-3 g-4">
+    <!-- Items dinámicos -->
+  </div>
+  <div id="home-menu-empty" class="text-center text-muted mt-3" style="display:none;">No hay platos disponibles por el momento.</div>
+  <div id="home-menu-error" class="text-center text-danger mt-3" style="display:none;">No se pudo cargar el menú disponible.</div>
+  <div class="text-center mt-4">
+    <a href="/cliente/menu.html" class="btn btn-outline-primary">Ir al menú completo</a>
+  </div>
+  
 </div>
 
 <div class="container my-5">
@@ -135,6 +104,42 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const grid = document.getElementById('home-menu-grid');
+      const emptyMsg = document.getElementById('home-menu-empty');
+      const errorMsg = document.getElementById('home-menu-error');
+      const fmtQ = v => `Q${Number(v || 0).toFixed(2)}`;
+      try {
+        const res = await fetch('/api/menu-items'); // público: solo disponibles
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const items = await res.json();
+        const latest = (items || []).sort((a,b) => (b.id||0) - (a.id||0)).slice(0,6);
+        if (!latest.length) {
+          emptyMsg.style.display = 'block';
+          return;
+        }
+        grid.innerHTML = latest.map(it => `
+          <div class="col">
+            <div class="card h-100 shadow-sm">
+              ${it.photo_url ? `<img src="${it.photo_url}" class="card-img-top" alt="${it.name}">` : `<div class="bg-light" style="height:180px;"></div>`}
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">${it.name}</h5>
+                <p class="card-text text-muted" style="min-height:3em;">${(it.description||'').substring(0,120)}</p>
+                <div class="mt-auto d-flex align-items-center justify-content-between">
+                  <span class="text-primary fw-bold">${fmtQ(it.price)}</span>
+                  <a href="/cliente/menu.html" class="btn btn-sm btn-amarillo">Ver</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Menu home error', err);
+        errorMsg.style.display = 'block';
+      }
+    });
+  </script>
 </body>
 <footer class="bg-dark text-white pt-4 pb-2">
   <div class="container">

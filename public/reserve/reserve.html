@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservacion</title>
+    <link rel="stylesheet" href="/reserve/style.css">
+</head>
+<body>
+    <h1>Reservaciones</h1>
+    <h2>Mesas para reservar</h2>
+
+    <div class="plano-container">
+        <img src="/Imajenes/reserveImg/planoRestaurante.png" alt="Plano del Restaurante" class="plano-img">
+        <!-- Mesas (duplicadas con posiciones simples) -->
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_A" alt="Mesa 4 A" style="top:38%;left:28%;width:110px;">
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_B" alt="Mesa 4 B" style="top:38%;left:58%;width:110px;">
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_C" alt="Mesa 4 C" style="top:65%;left:35%;width:110px;">
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_D" alt="Mesa 4 D" style="top:65%;left:65%;width:110px;">
+    </div>
+
+                <script>
+                        // Al cargar, aseguramos que existan las mesas que están dibujadas en el plano
+                        (async () => {
+                            try {
+                                const mesas = Array.from(document.querySelectorAll('.mesa-img')).map(el => ({ nombre: el.dataset.mesaId, capacidad: 4 }));
+                                await fetch('/api/mesas/ensure-defaults', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ mesas })
+                                });
+                            } catch (e) {
+                                console.warn('No se pudieron asegurar mesas por defecto', e);
+                            }
+                        })();
+
+                        // Click en mesa: crear BORRADOR de factura y redirigir al menú
+                        document.addEventListener('click', async (e) => {
+                                const mesa = e.target.closest('.mesa-img');
+                                if (!mesa) return;
+                                const mesaNombre = mesa.getAttribute('data-mesa-id') || 'MESA_4';
+                                try {
+                                        const res = await fetch(`/api/facturas/draft-from-mesa`, {
+                                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ mesa_nombre: mesaNombre })
+                                        });
+                                        if (!res.ok) {
+                                            const txt = await res.text().catch(() => '');
+                                            throw new Error('HTTP ' + res.status + (txt ? ' - ' + txt : ''));
+                                        }
+                                        const json = await res.json();
+                                        // Guarda el id de factura y mix
+                                        localStorage.setItem('facturaId', json.factura_id);
+                                        localStorage.setItem('mesasMixId', json.mesas_mix_id);
+                                        localStorage.setItem('reservaMesaNombre', mesaNombre);
+                                        // Redirige al menú para seleccionar comida
+                                        window.location.href = '/cliente/menu.html';
+                                } catch (err) {
+                                        alert('No se pudo iniciar la reserva: ' + err.message);
+                                }
+                        });
+                </script>
+</body>
+</html>
