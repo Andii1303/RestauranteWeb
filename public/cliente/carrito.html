@@ -50,9 +50,15 @@
   <div class="container py-5">
     <h2 class="mb-4 text-center">Tu Carrito</h2>
     <div id="carrito-contenido" class="row g-4"></div>
+    <div class="mt-3 text-end">
+      <h5>Total items: <span id="total-items">0</span></h5>
+      <h5>Total Q: <span id="total-precio">Q0.00</span></h5>
+    </div>
 
     <div class="text-center mt-4">
       <button id="vaciar-carrito" class="btn btn-danger">Vaciar Carrito</button>
+      <button id="pagar-carrito" class="btn btn-success">Pagar</button>
+      <button id="continuar-comprando" class="btn btn-secondary">Continuar Comprando</button>
     </div>
   </div>
 
@@ -87,47 +93,121 @@
       const carritoContenido = document.getElementById('carrito-contenido');
       const cartCount = document.getElementById('cart-count');
       const vaciarBtn = document.getElementById('vaciar-carrito');
+      const totalItemsEl = document.getElementById('total-items');
+      const totalPrecioEl = document.getElementById('total-precio');
+      const contComprando = document.getElementById('continuar-comprando');
+      const pagarBtn = document.getElementById('pagar-carrito');
 
-      let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-      cartCount.textContent = carrito.length;
+      contComprando.addEventListener('click', () => {
+        window.location.href = '/cliente/menu.html';
+      });
+
+      pagarBtn.addEventListener('click', () => {
+        // Ir a la página de pago
+        window.location.href = '/cliente/pagar.html';
+
+
+      });
+
+      function getCart() {
+        const raw = localStorage.getItem('carritoV2') || localStorage.getItem('carrito');
+        let cart;
+        try { cart = raw ? JSON.parse(raw) : null; } catch {}
+        if (Array.isArray(cart)) {
+          const items = {};
+          for (const it of cart) {
+            const key = (it.id != null ? String(it.id) : it.nombre);
+            if (!items[key]) items[key] = { id: it.id ?? null, nombre: it.nombre, qty: 0, price: it.price ?? 0 };
+            items[key].qty += 1;
+          }
+          cart = { items };
+          localStorage.setItem('carritoV2', JSON.stringify(cart));
+          localStorage.removeItem('carrito');
+        }
+        if (!cart || !cart.items) cart = { items: {} };
+        return cart;
+      }
+
+      function setCart(cart) {
+        localStorage.setItem('carritoV2', JSON.stringify(cart));
+        cartCount.textContent = totalQty(cart);
+        localStorage.setItem('cartCount', String(totalQty(cart)));
+      }
+
+      function totalQty(cart) { return Object.values(cart.items).reduce((a, it) => a + (Number(it.qty)||0), 0); }
+      function totalPrecio(cart) { return Object.values(cart.items).reduce((a, it) => a + (Number(it.qty||0) * Number(it.price||0)), 0); }
+
+      let carrito = getCart();
+      cartCount.textContent = totalQty(carrito);
 
       function renderCarrito() {
         carritoContenido.innerHTML = '';
 
-        if (carrito.length === 0) {
+        const entries = Object.entries(carrito.items);
+        if (entries.length === 0) {
           carritoContenido.innerHTML = '<p class="text-center">Tu carrito está vacío.</p>';
+          totalItemsEl.textContent = '0';
+          totalPrecioEl.textContent = 'Q0.00';
           return;
         }
 
-        carrito.forEach((producto, index) => {
+        entries.forEach(([key, producto], index) => {
           const card = document.createElement('div');
           card.className = 'col-md-4';
           card.innerHTML = `
             <div class="card h-100">
               <div class="card-body text-center">
                 <h5 class="card-title">${producto.nombre}</h5>
-                <button class="btn btn-outline-danger btn-sm eliminar" data-index="${index}">Eliminar</button>
+                <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+                  <button class="btn btn-sm btn-outline-secondary qty-decr" data-key="${key}">-</button>
+                  <span class="fw-bold">${producto.qty}</span>
+                  <button class="btn btn-sm btn-outline-secondary qty-incr" data-key="${key}">+</button>
+                </div>
+                <div class="text-muted">Q${Number(producto.price||0).toFixed(2)} c/u</div>
+                <div>Subtotal: <strong>Q${(Number(producto.price||0)*Number(producto.qty||0)).toFixed(2)}</strong></div>
+                <button class="btn btn-outline-danger btn-sm eliminar" data-key="${key}">Quitar</button>
               </div>
             </div>
           `;
           carritoContenido.appendChild(card);
         });
 
-        document.querySelectorAll('.eliminar').forEach(btn => {
+        // Listeners para +/- y quitar
+        document.querySelectorAll('.qty-incr').forEach(btn => {
           btn.addEventListener('click', () => {
-            const index = btn.getAttribute('data-index');
-            carrito.splice(index, 1);
-            localStorage.setItem('carrito', JSON.stringify(carrito));
-            cartCount.textContent = carrito.length;
+            const key = btn.getAttribute('data-key');
+            if (!carrito.items[key]) return;
+            carrito.items[key].qty += 1;
+            setCart(carrito);
             renderCarrito();
           });
         });
+        document.querySelectorAll('.qty-decr').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const key = btn.getAttribute('data-key');
+            if (!carrito.items[key]) return;
+            carrito.items[key].qty -= 1;
+            if (carrito.items[key].qty <= 0) delete carrito.items[key];
+            setCart(carrito);
+            renderCarrito();
+          });
+        });
+        document.querySelectorAll('.eliminar').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const key = btn.getAttribute('data-key');
+            delete carrito.items[key];
+            setCart(carrito);
+            renderCarrito();
+          });
+        });
+
+        totalItemsEl.textContent = String(totalQty(carrito));
+        totalPrecioEl.textContent = 'Q' + totalPrecio(carrito).toFixed(2);
       }
 
       vaciarBtn.addEventListener('click', () => {
-        carrito = [];
-        localStorage.removeItem('carrito');
-        cartCount.textContent = 0;
+        carrito = { items: {} };
+        setCart(carrito);
         renderCarrito();
       });
 

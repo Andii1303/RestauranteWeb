@@ -3,6 +3,11 @@ import { pool } from '../db.js';
 
 const router = Router();
 
+// Health check para validar que el router esté montado
+router.get('/api/facturas/health', (_req, res) => {
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
 // Crear factura borrador desde una o varias mesas (acepta nombres o IDs)
 router.post('/api/facturas/draft-from-mesa', async (req, res) => {
   try {
@@ -60,6 +65,60 @@ router.post('/api/facturas/:id/detalles', async (req, res) => {
     await conn.query('UPDATE facturas SET total = ? WHERE id = ?', [total, facturaId]);
     await conn.commit();
     res.status(201).json({ ok: true, total });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ ok: false, message: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+// Checkout: completar factura con datos del cliente e items opcionales, y marcar status
+router.post('/api/facturas/checkout', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const facturaIdIn = Number(req.body?.factura_id) || null;
+    const status = String(req.body?.status || 'PAGADA').toUpperCase();
+    const cliente = req.body?.cliente || {};
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+
+    await conn.beginTransaction();
+
+    let facturaId = facturaIdIn;
+    if (!facturaId) {
+      // Crear factura sin mesa (venta online)
+      const [mx] = await conn.query('INSERT INTO mesas_mix (mesas_csv) VALUES (\'ONLINE\')');
+      const mixId = mx.insertId;
+      const [r] = await conn.query(
+        'INSERT INTO facturas (mesas_mix_id, status, cliente_nombre, cliente_dni, cliente_telefono, cliente_email) VALUES (?, \'BORRADOR\', ?, ?, ?, ?)',
+        [mixId, cliente.nombre || null, cliente.dni || null, cliente.telefono || null, cliente.email || null]
+      );
+      facturaId = r.insertId;
+    } else {
+      // Actualizar datos del cliente en factura existente
+      await conn.query(
+        'UPDATE facturas SET cliente_nombre = ?, cliente_dni = ?, cliente_telefono = ?, cliente_email = ? WHERE id = ?',
+        [cliente.nombre || null, cliente.dni || null, cliente.telefono || null, cliente.email || null, facturaId]
+      );
+    }
+
+    // Insertar items (si vienen), evitando duplicados sólo si el cliente lo controla desde frontend
+    for (const it of items) {
+      const cant = Number(it?.cantidad) || 1;
+      const pu = Number(it?.precio_unit) || 0;
+      const subtotal = cant * pu;
+      await conn.query(
+        'INSERT INTO detalles_factura (factura_id, item_type, menu_item_id, nombre, cantidad, precio_unit, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [facturaId, it?.item_type || 'PLATO', it?.menu_item_id || null, it?.nombre || 'Item', cant, pu, subtotal]
+      );
+    }
+
+    // Recalcular total y actualizar status
+    const [[{ total }]] = await conn.query('SELECT IFNULL(SUM(subtotal),0) AS total FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+    await conn.query('UPDATE facturas SET total = ?, status = ? WHERE id = ?', [total, status, facturaId]);
+
+    await conn.commit();
+    res.status(200).json({ ok: true, factura_id: facturaId, total });
   } catch (err) {
     try { await conn.rollback(); } catch {}
     res.status(500).json({ ok: false, message: err.message });
