@@ -59,3 +59,38 @@ router.post('/api/mesas/ensure-one', async (req, res) => {
 });
 
 export default router;
+
+// Disponibilidad de mesas por franja (intervalos de 30 minutos)
+// GET /api/mesas/availability?fecha=YYYY-MM-DD&inicio=HH:MM&fin=HH:MM
+router.get('/api/mesas/availability', async (req, res) => {
+  try {
+    const fecha = String(req.query?.fecha || '').trim();
+    const inicio = String(req.query?.inicio || '').trim();
+    const fin = String(req.query?.fin || '').trim();
+    if (!fecha || !inicio || !fin) return res.status(400).json({ ok:false, message:'fecha, inicio y fin requeridos' });
+    const start = `${fecha} ${inicio}:00`;
+    const end = `${fecha} ${fin}:00`;
+    // Reservas activas que solapan: NOT (fin <= start OR inicio >= end)
+    const [rows] = await pool.query(
+      `SELECT r.id AS reserva_id, mm.mesas_csv
+       FROM reservas r
+       JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+       WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+         AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
+      , [start, end]
+    );
+    const idSet = new Set();
+    for (const r of rows) {
+      String(r.mesas_csv || '').split(',').map(s=>s.trim()).filter(Boolean).forEach(x => idSet.add(Number(x)));
+    }
+    const ids = Array.from(idSet);
+    let nombres = [];
+    if (ids.length) {
+      const [ms] = await pool.query(`SELECT id, nombre FROM mesas WHERE id IN (${ids.map(()=>'?').join(',')})`, ids);
+      nombres = ms.map(m => m.nombre);
+    }
+    res.json({ ok:true, unavailable_ids: ids, unavailable_nombres: nombres });
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});

@@ -7,8 +7,29 @@
     <link rel="stylesheet" href="/reserve/style.css">
 </head>
 <body>
-    <h1>Reservaciones</h1>
-    <h2>Mesas para reservar</h2>
+        <h1>Reservaciones</h1>
+        <h2>Mesas para reservar</h2>
+
+        <!-- Filtro de fecha y horas (intervalos de 30 minutos) -->
+        <div class="container" style="max-width:980px;margin:0 auto 16px auto;">
+            <div class="card" style="padding:12px;">
+                <div class="row" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                    <div class="col">
+                        <label for="reserva-fecha">Fecha</label>
+                        <input id="reserva-fecha" type="date" class="form-control" style="min-width:200px;">
+                    </div>
+                    <div class="col">
+                        <label for="reserva-inicio">Check-in</label>
+                        <select id="reserva-inicio" class="form-select" style="min-width:180px;"></select>
+                    </div>
+                    <div class="col">
+                        <label for="reserva-fin">Check-out</label>
+                        <select id="reserva-fin" class="form-select" style="min-width:180px;"></select>
+                    </div>
+                </div>
+                <small class="text-muted">Los horarios se muestran en intervalos de 30 minutos. Seleccione la fecha y el rango de la reserva.</small>
+            </div>
+        </div>
 
     <div class="plano-container">
         <img src="/Imajenes/reserveImg/planoRestaurante.png" alt="Plano del Restaurante" class="plano-img">
@@ -19,45 +40,6 @@
         <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_D" alt="Mesa 4 D" style="top:65%;left:65%;width:110px;">
     </div>
 
-                <script>
-                        // Al cargar, aseguramos que existan las mesas que están dibujadas en el plano
-                        (async () => {
-                            try {
-                                const mesas = Array.from(document.querySelectorAll('.mesa-img')).map(el => ({ nombre: el.dataset.mesaId, capacidad: 4 }));
-                                await fetch('/api/mesas/ensure-defaults', {
-                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ mesas })
-                                });
-                            } catch (e) {
-                                console.warn('No se pudieron asegurar mesas por defecto', e);
-                            }
-                        })();
-
-                        // Click en mesa: crear BORRADOR de factura y redirigir al menú
-                        document.addEventListener('click', async (e) => {
-                                const mesa = e.target.closest('.mesa-img');
-                                if (!mesa) return;
-                                const mesaNombre = mesa.getAttribute('data-mesa-id') || 'MESA_4';
-                                try {
-                                        const res = await fetch(`/api/facturas/draft-from-mesa`, {
-                                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ mesa_nombre: mesaNombre })
-                                        });
-                                        if (!res.ok) {
-                                            const txt = await res.text().catch(() => '');
-                                            throw new Error('HTTP ' + res.status + (txt ? ' - ' + txt : ''));
-                                        }
-                                        const json = await res.json();
-                                        // Guarda el id de factura y mix
-                                        localStorage.setItem('facturaId', json.factura_id);
-                                        localStorage.setItem('mesasMixId', json.mesas_mix_id);
-                                        localStorage.setItem('reservaMesaNombre', mesaNombre);
-                                        // Redirige al menú para seleccionar comida
-                                        window.location.href = '/cliente/menu.html';
-                                } catch (err) {
-                                        alert('No se pudo iniciar la reserva: ' + err.message);
-                                }
-                        });
-                </script>
+                <script src="/reserve/reserve.js"></script>
 </body>
 </html>

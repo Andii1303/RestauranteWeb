@@ -115,3 +115,20 @@ CREATE TABLE IF NOT EXISTS detalles_factura (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_detalles_factura_factura FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Evolución de reservas para soportar mix de mesas y franjas horarias
+ALTER TABLE reservas
+  ADD COLUMN IF NOT EXISTS mesas_mix_id INT NULL,
+  ADD COLUMN IF NOT EXISTS created_by VARCHAR(150) NULL,
+  ADD COLUMN IF NOT EXISTS activa TINYINT(1) NOT NULL DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS reserva_inicio DATETIME NULL,
+  ADD COLUMN IF NOT EXISTS reserva_fin DATETIME NULL,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS factura_id INT NULL;
+
+-- FKs e índices (idempotentes)
+ALTER TABLE reservas
+  ADD CONSTRAINT IF NOT EXISTS fk_reservas_mix FOREIGN KEY (mesas_mix_id) REFERENCES mesas_mix(id) ON DELETE SET NULL,
+  ADD CONSTRAINT IF NOT EXISTS fk_reservas_factura FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_reservas_activa_inicio_fin ON reservas (activa, reserva_inicio, reserva_fin);

@@ -38,9 +38,51 @@ router.post('/api/facturas/draft-from-mesa', async (req, res) => {
     }
 
     const mesasCsv = mesaIds.join(',');
-    const [mx] = await pool.query('INSERT INTO mesas_mix (mesas_csv) VALUES (?)', [mesasCsv]);
+
+    // Si viene una franja de reserva, validar que no haya solapes con reservas activas
+    const reservaInicio = (req.body?.reserva_inicio || '').trim();
+    const reservaFin = (req.body?.reserva_fin || '').trim();
+    if (reservaInicio && reservaFin) {
+      const [conflicts] = await pool.query(
+        `SELECT r.id, mm.mesas_csv
+         FROM reservas r
+         JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+         WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+           AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
+        , [reservaInicio, reservaFin]
+      );
+      // Chequear intersección de mesas
+      const conflictSet = new Set();
+      for (const c of conflicts) {
+        String(c.mesas_csv||'').split(',').map(s=>Number(s.trim())).filter(Boolean).forEach(x => conflictSet.add(x));
+      }
+      const intersect = mesaIds.some(id => conflictSet.has(id));
+      if (intersect) return res.status(409).json({ ok:false, message:'Las mesas seleccionadas ya están reservadas en ese horario' });
+    }
+
+  const [mx] = await pool.query('INSERT INTO mesas_mix (mesas_csv) VALUES (?)', [mesasCsv]);
     const mixId = mx.insertId;
     const [r] = await pool.query('INSERT INTO facturas (mesas_mix_id, status) VALUES (?, "BORRADOR")', [mixId]);
+
+    // Si viene la hora de reserva, guardarla en reserva_hora (inicio)
+    if (reservaInicio) {
+      try {
+        await pool.query('UPDATE facturas SET reserva_hora = ? WHERE id = ?', [reservaInicio, r.insertId]);
+      } catch {}
+    }
+
+    // Crear registro en reservas con la franja si fue provista
+    if (reservaInicio && reservaFin) {
+      const createdBy = String(req.body?.created_by || '').trim() || null;
+      // Compat: la tabla `reservas` tiene columna legacy `mesa_id` NOT NULL (VARCHAR)
+      // Usamos el primer token provisto como identificador legible (p.ej. nombre de mesa)
+      const mesaLegacy = mesaNombre || (nombresOIds[0] || '').toString();
+      await pool.query(
+        'INSERT INTO reservas (mesa_id, mesas_mix_id, factura_id, created_by, activa, reserva_inicio, reserva_fin, status) VALUES (?, ?, ?, ?, 1, ?, ?, "BORRADOR")',
+        [mesaLegacy, mixId, r.insertId, createdBy, reservaInicio, reservaFin]
+      );
+    }
+
     res.status(201).json({ ok: true, factura_id: r.insertId, mesas_mix_id: mixId, mesas_csv: mesasCsv });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
@@ -116,6 +158,11 @@ router.post('/api/facturas/checkout', async (req, res) => {
     // Recalcular total y actualizar status
     const [[{ total }]] = await conn.query('SELECT IFNULL(SUM(subtotal),0) AS total FROM detalles_factura WHERE factura_id = ?', [facturaId]);
     await conn.query('UPDATE facturas SET total = ?, status = ? WHERE id = ?', [total, status, facturaId]);
+    // Reflejar estado en la reserva vinculada (si existe)
+    try {
+      const reservaStatus = status === 'PAGADA' ? 'CONFIRMADA' : (status === 'CANCELADA' ? 'CANCELADA' : 'BORRADOR');
+      await conn.query('UPDATE reservas SET status = ? WHERE factura_id = ?', [reservaStatus, facturaId]);
+    } catch {}
 
     await conn.commit();
     res.status(200).json({ ok: true, factura_id: facturaId, total });
