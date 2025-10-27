@@ -36,7 +36,8 @@ la experiencia de usuario.
 
 ## Versión 1.2.2 (26/10/2025)
 - Reserva UI: el diálogo ahora tiene z-index elevado para quedar por encima de las mesas.
-- Fallbacks robustos en `reserve.js` para obtener detalles de mesa usando `/api/mesas` y `/api/mesas/availability` si `/api/mesas/:nombre/details` no está disponible.
+- Fallbacks robustos en `reserve.js` para obtener detalles de mesa usando `/api/mesas` y `/api/mesas/availability` si 
+`/api/mesas/:nombre/details` no está disponible.
 
 ## Versión 1.3.0 (26/10/2025)
 - Orden general de `public/`: separación estricta de HTML, CSS y JS.
