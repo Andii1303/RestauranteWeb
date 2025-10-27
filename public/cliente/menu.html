@@ -76,9 +76,25 @@
 
    <div class="container py-4">
     <div id="menu-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4"></div>
-    <div id="menu-empty" class="text-center text-muted mt-3" style="display:none;">No hay platos disponibles por el momento.</div>
-    <div id="menu-error" class="text-center text-danger mt-3" style="display:none;">No se pudo cargar el menú.</div>
+    <div id="menu-empty" class="text-center text-muted mt-3 d-none">No hay platos disponibles por el momento.</div>
+    <div id="menu-error" class="text-center text-danger mt-3 d-none">No se pudo cargar el menú.</div>
   </div>
+
+  <template id="tpl-menu-card">
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-img-top-holder"><div class="card-img-placeholder"></div></div>
+        <div class="card-body d-flex flex-column text-center">
+          <h5 class="card-title"></h5>
+          <p class="card-text card-desc"></p>
+          <div class="mt-auto d-flex align-items-center justify-content-between">
+            <span class="text-primary fw-bold price"></span>
+            <span class="actions"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
 
 <script src="/cliente/cart-lib.js"></script>
 
@@ -131,22 +147,42 @@
   const res = await fetch('/api/menu-items?includeUnavailable=1'); // incluir activos aunque no tengan stock
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const items = await res.json();
-      if (!items.length) { emptyMsg.style.display = 'block'; return; }
-      grid.innerHTML = items.map(it => `
-        <div class="col">
-          <div class="card h-100">
-            ${it.photo_url ? `<img src="${it.photo_url}" class="card-img-top" alt="${it.name}">` : `<div class="bg-light" style="height:180px;"></div>`}
-            <div class="card-body d-flex flex-column text-center">
-              <h5 class="card-title">${it.name}</h5>
-              <p class="card-text">${(it.description||'').substring(0,120)}</p>
-              <div class="mt-auto d-flex align-items-center justify-content-between">
-                <span class="text-primary fw-bold">${fmtQ(it.price)}</span>
-                ${it.available ? `<button class="btn btn-agregar btn-sm" data-nombre="${it.name}">Agregar</button>` : `<span class="badge bg-secondary">Sin stock</span>`}
-              </div>
-            </div>
-          </div>
-        </div>
-      `).join('');
+      if (!items.length) { emptyMsg.classList.remove('d-none'); return; }
+      grid.innerHTML = '';
+      const tpl = document.getElementById('tpl-menu-card');
+      items.forEach(it => {
+        const node = tpl.content.cloneNode(true);
+        // Imagen
+        if (it.photo_url) {
+          const holder = node.querySelector('.card-img-top-holder');
+          holder.innerHTML = '';
+          const img = document.createElement('img');
+          img.className = 'card-img-top';
+          img.alt = it.name;
+          img.src = it.photo_url;
+          holder.appendChild(img);
+        }
+        // Título y descripción
+        node.querySelector('.card-title').textContent = it.name;
+        node.querySelector('.card-desc').textContent = (it.description||'').substring(0,120);
+        // Precio
+        node.querySelector('.price').textContent = fmtQ(it.price);
+        // Acción
+        const actions = node.querySelector('.actions');
+        if (it.available) {
+          const btn = document.createElement('button');
+          btn.className = 'btn btn-agregar btn-sm';
+          btn.dataset.nombre = it.name;
+          btn.textContent = 'Agregar';
+          actions.appendChild(btn);
+        } else {
+          const badge = document.createElement('span');
+          badge.className = 'badge bg-secondary';
+          badge.textContent = 'Sin stock';
+          actions.appendChild(badge);
+        }
+        grid.appendChild(node);
+      });
 
       grid.addEventListener('click', async (e) => {
         const btn = e.target.closest('.btn-agregar');
@@ -163,7 +199,7 @@
       });
     } catch (err) {
       console.error('Menu page error', err);
-      errorMsg.style.display = 'block';
+  errorMsg.classList.remove('d-none');
     }
   });
 </script>

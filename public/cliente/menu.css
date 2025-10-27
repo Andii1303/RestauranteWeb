@@ -17,3 +17,9 @@
   height: 150px;
   object-fit: cover;
 }
+
+/* Utilidades compartidas para tarjetas */
+.card-img-placeholder { height: 180px; background: #f1f3f5; }
+.card-img-top-holder { min-height: 180px; }
+.card-desc { min-height: 3em; }
+.d-none { display: none !important; }

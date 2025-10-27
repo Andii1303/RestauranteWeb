@@ -6,7 +6,7 @@ const errorBox = document.getElementById('loginError');
 function showError(msg){
 	if (errorBox){
 		errorBox.textContent = msg || 'Correo o contraseña incorrectos';
-		errorBox.style.display = 'block';
+		errorBox.classList.remove('d-none');
 	} else {
 		alert(msg || 'Correo o contraseña incorrectos');
 	}
@@ -26,7 +26,7 @@ if (!form){
 } else {
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
-		if (errorBox) errorBox.style.display = 'none';
+		if (errorBox) errorBox.classList.add('d-none');
 		const emailEl = document.getElementById('email');
 		const passEl = document.getElementById('password');
 		const email = (emailEl?.value || '').trim();

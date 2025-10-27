@@ -8,31 +8,45 @@ function cargarOrdenes() {
     .then(res => res.json())
     .then(data => {
       const contenedor = document.getElementById('lista-ordenes');
-      contenedor.innerHTML = '';
+      contenedor.textContent = '';
+
+      const h = (tag, { className, text, attrs } = {}, children = []) => {
+        const el = document.createElement(tag);
+        if (className) el.className = className;
+        if (text != null) el.textContent = text;
+        if (attrs) Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, String(v)));
+        (Array.isArray(children) ? children : [children]).forEach(ch => { if (ch) el.appendChild(ch); });
+        return el;
+      };
 
       data.forEach(orden => {
-        const card = document.createElement('div');
-        card.className = 'col-md-6';
-
-        card.innerHTML = `
-          <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
-              ${orden.tipo === 'mesa' ? `Mesa #${orden.numero}` : 'Pedido en línea'}
-            </div>
-            <div class="card-body">
-              <h5 class="card-title">Platillos:</h5>
-              <ul>${orden.platillos.map(p => `<li>${p}</li>`).join('')}</ul>
-              <label for="estado-${orden.id}" class="form-label mt-2">Estado:</label>
-              <select class="form-select estado-orden" id="estado-${orden.id}" data-id="${orden.id}">
-                <option value="pendiente" ${orden.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-                <option value="preparando" ${orden.estado === 'preparando' ? 'selected' : ''}>Preparando</option>
-                <option value="lista" ${orden.estado === 'lista' ? 'selected' : ''}>Lista</option>
-              </select>
-            </div>
-          </div>
-        `;
-
-        contenedor.appendChild(card);
+        const col = h('div', { className: 'col-md-6' });
+        const card = h('div', { className: 'card border-primary' });
+        const header = h('div', { className: 'card-header bg-primary text-white', text: (orden.tipo === 'mesa' ? `Mesa #${orden.numero}` : 'Pedido en línea') });
+        const body = h('div', { className: 'card-body' });
+        body.appendChild(h('h5', { className: 'card-title', text: 'Platillos:' }));
+        const ul = h('ul');
+        (orden.platillos || []).forEach(p => ul.appendChild(h('li', { text: p })));
+        body.appendChild(ul);
+        const label = h('label', { className: 'form-label mt-2', attrs: { for: `estado-${orden.id}` }, text: 'Estado:' });
+        const select = h('select', { className: 'form-select estado-orden', attrs: { id: `estado-${orden.id}` } });
+        select.dataset.id = String(orden.id);
+        const opts = [
+          { v: 'pendiente', t: 'Pendiente' },
+          { v: 'preparando', t: 'Preparando' },
+          { v: 'lista', t: 'Lista' }
+        ];
+        opts.forEach(o => {
+          const opt = h('option', { text: o.t, attrs: { value: o.v } });
+          if (orden.estado === o.v) opt.selected = true;
+          select.appendChild(opt);
+        });
+        body.appendChild(label);
+        body.appendChild(select);
+        card.appendChild(header);
+        card.appendChild(body);
+        col.appendChild(card);
+        contenedor.appendChild(col);
       });
 
       document.querySelectorAll('.estado-orden').forEach(select => {
@@ -58,57 +72,4 @@ function cargarOrdenes() {
 }
 
 
- // --- Función para cerrar sesión ---
- /*
-  function cerrarSesion() {
-    // Eliminar datos de sesión
-    localStorage.removeItem("usuario");
-    sessionStorage.clear();
-
-    // Evitar volver con "atrás"
-    window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-      window.history.go(1);
-    };
-
-    // Redirigir al login
-    window.location.replace("../views/login.html");
-  window.location.replace("/login/login.html");
-  }
-
-  // --- Confirmación antes de cerrar sesión ---
-  document.getElementById("btnCerrarSesion").addEventListener("click", function() {
-    const confirmar = confirm("¿Estás seguro de que quieres cerrar sesión?");
-    if (confirmar) {
-      cerrarSesion();
-    }
-  });
-
-  // --- Verificación de sesión al cargar la página ---
-  document.addEventListener("DOMContentLoaded", function() {
-    const usuario = localStorage.getItem("usuario");
-    if (!usuario) {
-      window.location.replace("../views/login.html");
-    window.location.replace("/login/login.html");
-    }
-  });
-
-  // --- Expiración automática por inactividad ---
-  let tiempoInactividad;
-  const limiteInactividad = 10 * 60 * 1000; // 10 minutos
-
-  function reiniciarTemporizador() {
-    clearTimeout(tiempoInactividad);
-    tiempoInactividad = setTimeout(() => {
-      alert("Tu sesión ha expirado por inactividad.");
-      cerrarSesion();
-    }, limiteInactividad);
-  }
-
-  // Reiniciar temporizador al mover el mouse, presionar teclas, hacer clic o desplazarse
-  window.onload = reiniciarTemporizador;
-  document.onmousemove = reiniciarTemporizador;
-  document.onkeydown = reiniciarTemporizador;
-  document.onclick = reiniciarTemporizador;
-  document.onscroll = reiniciarTemporizador;
-*/
+// (Limpieza) Se removieron bloques comentados sin uso

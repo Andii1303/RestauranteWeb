@@ -72,13 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
 					const name = el.dataset.mesaId;
 					if (unavailable.has(name)) {
 						el.classList.add('mesa-disabled');
-						el.style.filter = 'grayscale(1)';
-						el.style.pointerEvents = 'none';
 						el.title = 'Mesa no disponible en el horario seleccionado';
 					} else {
 						el.classList.remove('mesa-disabled');
-						el.style.filter = '';
-						el.style.pointerEvents = '';
 						el.title = '';
 					}
 				});
@@ -94,43 +90,141 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Primera carga
 		setTimeout(refreshAvailability, 0);
 
-	// Click en mesa: crear BORRADOR de factura y redirigir al menú
-	document.addEventListener('click', async (e) => {
-		const mesa = e.target.closest('.mesa-img');
-		if (!mesa) return;
-			if (mesa.classList.contains('mesa-disabled')) return;
-		const mesaNombre = mesa.getAttribute('data-mesa-id') || 'MESA_4';
-		// Validar selección de fecha y horas
+
+	// Estado de mesas seleccionadas (por nombre)
+	const selected = new Set(JSON.parse(localStorage.getItem('mesasSeleccionadas') || '[]'));
+
+	function persistSelected() {
+		localStorage.setItem('mesasSeleccionadas', JSON.stringify(Array.from(selected)));
+	}
+
+	function updateMesaStyles() {
+		document.querySelectorAll('.mesa-img').forEach(el => {
+			const name = el.dataset.mesaId;
+			if (selected.has(name)) {
+				el.classList.add('mesa-selected');
+			} else {
+				el.classList.remove('mesa-selected');
+			}
+		});
+	}
+
+	function getDialogElements() {
+		const dlg = document.getElementById('mesa-dialog');
+		return {
+			dlg,
+			title: dlg?.querySelector('#dlg-title'),
+			estado: dlg?.querySelector('#dlg-estado'),
+			capacidad: dlg?.querySelector('#dlg-capacidad'),
+			extras: dlg?.querySelector('#dlg-extras'),
+			btnSel: dlg?.querySelector('#dlg-select'),
+			btnCancel: dlg?.querySelector('#dlg-cancel'),
+		};
+	}
+
+	async function openMesaDialog(mesaNombre) {
 		const fecha = (document.getElementById('reserva-fecha')?.value || '').trim();
 		const hi = (document.getElementById('reserva-inicio')?.value || '').trim();
 		const hf = (document.getElementById('reserva-fin')?.value || '').trim();
 		if (!fecha || !hi || !hf) { alert('Seleccione fecha, hora de check-in y check-out'); return; }
 		if (hi >= hf) { alert('El check-out debe ser mayor al check-in'); return; }
-		// Construir ISO locales (sin zona) para enviar al backend
+		const { dlg, title, estado, capacidad, extras, btnSel, btnCancel } = getDialogElements();
+		if (!dlg) return;
+		dlg.classList.add('open');
+		title.textContent = `Mesa ${mesaNombre}`;
+		estado.textContent = 'Cargando...';
+		capacidad.textContent = '-';
+		extras.textContent = '-';
+		btnSel.disabled = true;
+		btnSel.textContent = selected.has(mesaNombre) ? 'Deseleccionar' : 'Seleccionar';
+
+		btnCancel.onclick = () => { dlg.classList.remove('open'); };
+		btnSel.onclick = () => {
+			if (selected.has(mesaNombre)) selected.delete(mesaNombre); else selected.add(mesaNombre);
+			persistSelected();
+			updateMesaStyles();
+			dlg.classList.remove('open');
+		};
+
+		try {
+			// Intento 1: ruta paramétrica
+			let r = await fetch(`/api/mesas/${encodeURIComponent(mesaNombre)}/details?fecha=${encodeURIComponent(fecha)}&inicio=${encodeURIComponent(hi)}&fin=${encodeURIComponent(hf)}`);
+			let json;
+			if (r.ok) {
+				json = await r.json();
+			} else if (r.status === 404) {
+				// Intento 2: fallback por query
+				const r2 = await fetch(`/api/mesa-details?nombre=${encodeURIComponent(mesaNombre)}&fecha=${encodeURIComponent(fecha)}&inicio=${encodeURIComponent(hi)}&fin=${encodeURIComponent(hf)}`);
+				if (r2.ok) {
+					json = await r2.json();
+				} else {
+					// Intento 3: componer con /api/mesas y /api/mesas/availability
+					const [allMesasRes, availRes] = await Promise.all([
+						fetch('/api/mesas'),
+						fetch(`/api/mesas/availability?fecha=${encodeURIComponent(fecha)}&inicio=${encodeURIComponent(hi)}&fin=${encodeURIComponent(hf)}`)
+					]);
+					const allMesas = allMesasRes.ok ? await allMesasRes.json() : { items: [] };
+					const avail = availRes.ok ? await availRes.json() : { unavailable_nombres: [] };
+					const mesaInfo = (allMesas.items || []).find(m => String(m.nombre) === mesaNombre) || { capacidad: 4 };
+					const noDisp = new Set((avail.unavailable_nombres || []).map(String));
+					json = { ok: true, nombre: mesaNombre, capacidad: mesaInfo.capacidad || 4, disponible: !noDisp.has(mesaNombre), extras_max: 2 };
+				}
+			} else {
+				json = await r.json();
+			}
+			const disp = json.disponible ? 'Disponible' : 'No disponible';
+			estado.textContent = disp;
+			capacidad.textContent = String(json.capacidad);
+			extras.textContent = String(json.extras_max);
+			btnSel.disabled = !json.disponible;
+		} catch (e) {
+			const { estado } = getDialogElements();
+			if (estado) estado.textContent = 'Error al cargar detalles de la mesa';
+			btnSel.disabled = true;
+		}
+	}
+
+	// Click en mesa: abrir diálogo y permitir seleccionar múltiples mesas
+	document.addEventListener('click', async (e) => {
+		const mesa = e.target.closest('.mesa-img');
+		if (!mesa) return;
+		if (mesa.classList.contains('mesa-disabled')) return;
+		const mesaNombre = mesa.getAttribute('data-mesa-id');
+		openMesaDialog(mesaNombre);
+	});
+
+	// Botón Continuar: crear factura borrador con todas las mesas seleccionadas
+	const btnContinuar = document.getElementById('btn-continuar');
+	btnContinuar?.addEventListener('click', async () => {
+		if (selected.size === 0) { alert('Seleccione al menos una mesa'); return; }
+		const fecha = (document.getElementById('reserva-fecha')?.value || '').trim();
+		const hi = (document.getElementById('reserva-inicio')?.value || '').trim();
+		const hf = (document.getElementById('reserva-fin')?.value || '').trim();
+		if (!fecha || !hi || !hf) { alert('Seleccione fecha, hora de check-in y check-out'); return; }
+		if (hi >= hf) { alert('El check-out debe ser mayor al check-in'); return; }
 		const reservaInicio = `${fecha} ${hi}:00`;
 		const reservaFin = `${fecha} ${hf}:00`;
+		const mesasCsv = Array.from(selected).join(',');
 		try {
 			const res = await fetch(`/api/facturas/draft-from-mesa`, {
 				method: 'POST', headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ mesa_nombre: mesaNombre, reserva_inicio: reservaInicio, reserva_fin: reservaFin })
+				body: JSON.stringify({ mesas_csv: mesasCsv, reserva_inicio: reservaInicio, reserva_fin: reservaFin })
 			});
-			if (!res.ok) {
-				const txt = await res.text().catch(() => '');
-				throw new Error('HTTP ' + res.status + (txt ? ' - ' + txt : ''));
-			}
 			const json = await res.json();
-			// Guarda el id de factura y mix
+			if (!res.ok) throw new Error(json?.message || ('HTTP '+res.status));
 			localStorage.setItem('facturaId', json.factura_id);
 			localStorage.setItem('mesasMixId', json.mesas_mix_id);
-			localStorage.setItem('reservaMesaNombre', mesaNombre);
+			localStorage.setItem('mesasSeleccionadas', JSON.stringify(Array.from(selected)));
 			localStorage.setItem('reservaFecha', fecha);
 			localStorage.setItem('reservaCheckIn', hi);
 			localStorage.setItem('reservaCheckOut', hf);
-			// Redirige al menú para seleccionar comida
 			window.location.href = '/cliente/menu.html';
 		} catch (err) {
 			alert('No se pudo iniciar la reserva: ' + err.message);
 		}
 	});
+
+	// Reflejar selección persistida al cargar
+	updateMesaStyles();
 });
 

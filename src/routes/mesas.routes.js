@@ -4,7 +4,7 @@ import { pool } from '../db.js';
 const router = Router();
 
 // Listar mesas
-router.get('/api/mesas', async (req, res) => {
+router.get('/api/mesas', async (_req, res) => {
   try {
     const [rows] = await pool.query('SELECT id, nombre, capacidad, activa FROM mesas ORDER BY id');
     res.json({ ok: true, items: rows });
@@ -58,8 +58,6 @@ router.post('/api/mesas/ensure-one', async (req, res) => {
   }
 });
 
-export default router;
-
 // Disponibilidad de mesas por franja (intervalos de 30 minutos)
 // GET /api/mesas/availability?fecha=YYYY-MM-DD&inicio=HH:MM&fin=HH:MM
 router.get('/api/mesas/availability', async (req, res) => {
@@ -94,3 +92,79 @@ router.get('/api/mesas/availability', async (req, res) => {
     res.status(500).json({ ok:false, message: err.message });
   }
 });
+
+// Detalle y disponibilidad de una mesa específica por franja
+// GET /api/mesas/:nombre/details?fecha=YYYY-MM-DD&inicio=HH:MM&fin=HH:MM
+router.get('/api/mesas/:nombre/details', async (req, res) => {
+  try {
+    const nombre = String(req.params.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ ok:false, message:'nombre requerido' });
+    const [rows] = await pool.query('SELECT id, nombre, capacidad, activa FROM mesas WHERE nombre = ? LIMIT 1', [nombre]);
+    if (!rows.length) return res.status(404).json({ ok:false, message:'mesa no encontrada' });
+    const mesa = rows[0];
+    const fecha = String(req.query?.fecha || '').trim();
+    const inicio = String(req.query?.inicio || '').trim();
+    const fin = String(req.query?.fin || '').trim();
+    let disponible = true;
+    if (fecha && inicio && fin) {
+      const start = `${fecha} ${inicio}:00`;
+      const end = `${fecha} ${fin}:00`;
+      const [conf] = await pool.query(
+        `SELECT mm.mesas_csv
+         FROM reservas r JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+         WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+           AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
+        , [start, end]
+      );
+      const conflictSet = new Set();
+      for (const c of conf) {
+        String(c.mesas_csv||'').split(',').map(s=>Number(s.trim())).filter(Boolean).forEach(x => conflictSet.add(x));
+      }
+      // Ver si el id de esta mesa está en conflicto
+      disponible = !conflictSet.has(mesa.id);
+    }
+    // Regla simple para extras: hasta 2 sillas adicionales por mesa
+    const extras_max = 2;
+    res.json({ ok:true, nombre: mesa.nombre, capacidad: mesa.capacidad, activa: !!mesa.activa, disponible, extras_max });
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+// Alternativa sin parámetro en la ruta para evitar conflictos de matching en algunos entornos
+// GET /api/mesa-details?nombre=MESA_4_A&fecha=YYYY-MM-DD&inicio=HH:MM&fin=HH:MM
+router.get('/api/mesa-details', async (req, res) => {
+  try {
+    const nombre = String(req.query?.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ ok:false, message:'nombre requerido' });
+    const [rows] = await pool.query('SELECT id, nombre, capacidad, activa FROM mesas WHERE nombre = ? LIMIT 1', [nombre]);
+    if (!rows.length) return res.status(404).json({ ok:false, message:'mesa no encontrada' });
+    const mesa = rows[0];
+    const fecha = String(req.query?.fecha || '').trim();
+    const inicio = String(req.query?.inicio || '').trim();
+    const fin = String(req.query?.fin || '').trim();
+    let disponible = true;
+    if (fecha && inicio && fin) {
+      const start = `${fecha} ${inicio}:00`;
+      const end = `${fecha} ${fin}:00`;
+      const [conf] = await pool.query(
+        `SELECT mm.mesas_csv
+         FROM reservas r JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+         WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+           AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
+        , [start, end]
+      );
+      const conflictSet = new Set();
+      for (const c of conf) {
+        String(c.mesas_csv||'').split(',').map(s=>Number(s.trim())).filter(Boolean).forEach(x => conflictSet.add(x));
+      }
+      disponible = !conflictSet.has(mesa.id);
+    }
+    const extras_max = 2;
+    res.json({ ok:true, nombre: mesa.nombre, capacidad: mesa.capacidad, activa: !!mesa.activa, disponible, extras_max });
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+export default router;

@@ -25,22 +25,29 @@ document.getElementById('formUsuario')?.addEventListener('submit', function (e) 
 function actualizarTablaUsuarios() {
   const tbody = document.getElementById('tablaUsuarios');
   if (!tbody) return;
-  tbody.innerHTML = '';
+  tbody.textContent = '';
   usuarios.forEach(usuario => {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td>${usuario.id}</td>
-      <td>${usuario.nombre}</td>
-      <td>${usuario.correo}</td>
-      <td>${usuario.contraseña}</td>
-      <td>${usuario.rol}</td>
-      <td>
-        <button class="btn btn-sm btn-primary me-2" onclick="editarUsuario(${usuario.id})">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
-      </td>
-    `;
-    tbody.appendChild(fila);
+    const tr = document.createElement('tr');
+    const c1 = document.createElement('td'); c1.textContent = String(usuario.id);
+    const c2 = document.createElement('td'); c2.textContent = usuario.nombre;
+    const c3 = document.createElement('td'); c3.textContent = usuario.correo;
+    const c4 = document.createElement('td'); c4.textContent = usuario.contraseña;
+    const c5 = document.createElement('td'); c5.textContent = usuario.rol;
+    const c6 = document.createElement('td');
+    const btnE = document.createElement('button'); btnE.className = 'btn btn-sm btn-primary me-2'; btnE.textContent = 'Editar'; btnE.dataset.action = 'edit'; btnE.dataset.id = String(usuario.id);
+    const btnD = document.createElement('button'); btnD.className = 'btn btn-sm btn-danger'; btnD.textContent = 'Eliminar'; btnD.dataset.action = 'del'; btnD.dataset.id = String(usuario.id);
+    c6.appendChild(btnE); c6.appendChild(btnD);
+    tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3); tr.appendChild(c4); tr.appendChild(c5); tr.appendChild(c6);
+    tbody.appendChild(tr);
   });
+  tbody.onclick = (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    const action = btn.dataset.action;
+    if (action === 'edit') editarUsuario(id);
+    else if (action === 'del') eliminarUsuario(id);
+  };
 }
 
 function editarUsuario(id) {

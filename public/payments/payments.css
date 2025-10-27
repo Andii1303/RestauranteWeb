@@ -1,0 +1,6 @@
+/* Estilos específicos de la sección de pagos */
+
+/* Asegurar ancho cómodo para tarjetas en páginas de pagos */
+.payments-container .card { border-radius: 10px; }
+
+/* Mostrar/ocultar detalles de tarjeta controlados por .d-none/.d-block ya definidos en Styles.css */

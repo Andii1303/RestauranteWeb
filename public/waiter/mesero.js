@@ -2,6 +2,15 @@
 let ordenes = JSON.parse(localStorage.getItem('ordenes')) || [];
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Helper para crear nodos sin usar innerHTML
+  function h(tag, { className, text, attrs } = {}, children = []){
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text != null) el.textContent = text;
+    if (attrs) Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, String(v)));
+    (Array.isArray(children) ? children : [children]).forEach(ch => { if (ch) el.appendChild(ch); });
+    return el;
+  }
   // Cargar mesas desde localStorage o inicializar
   let mesas = JSON.parse(localStorage.getItem('mesas')) || Array.from({ length: 15 }, (_, i) => ({
     id: i + 1,
@@ -39,25 +48,32 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderizarMesas() {
     const contenedor = document.getElementById('contenedor-mesas');
     if (!contenedor) return;
-    contenedor.innerHTML = '';
+    contenedor.textContent = '';
 
     mesas.filter(m => m.estado === 'Ocupada').forEach((mesa, index) => {
-      const card = document.createElement('div');
-      card.className = 'col-md-4 mb-3';
-      card.innerHTML = `
-        <div class="card border-danger">
-          <div class="card-body">
-            <h5 class="card-title">Mesa ${mesa.id}</h5>
-            <p class="card-text">Estado: <strong>${mesa.estado}</strong></p>
-            <p class="card-text">Cliente: ${mesa.nombre} ${mesa.apellido}</p>
-            <p class="card-text">Hora: ${mesa.hora}</p>
-            <button class="btn btn-sm btn-warning me-2" onclick="editarMesa(${index})">Editar</button>
-            <button class="btn btn-sm btn-success" onclick="finalizarMesa(${index})">Finalizado</button>
-            <button class="btn btn-sm btn-info me-2" onclick="generarOrden(${index})">Generar Orden</button>
-          </div>
-        </div>
-      `;
-      contenedor.appendChild(card);
+      const col = h('div', { className: 'col-md-4 mb-3' });
+      const card = h('div', { className: 'card border-danger' });
+      const body = h('div', { className: 'card-body' });
+      body.appendChild(h('h5', { className: 'card-title', text: `Mesa ${mesa.id}` }));
+      const pEstado = h('p', { className: 'card-text' });
+      pEstado.appendChild(document.createTextNode('Estado: '));
+      const strong = h('strong', { text: mesa.estado });
+      pEstado.appendChild(strong);
+      body.appendChild(pEstado);
+      body.appendChild(h('p', { className: 'card-text', text: `Cliente: ${mesa.nombre} ${mesa.apellido}` }));
+      body.appendChild(h('p', { className: 'card-text', text: `Hora: ${mesa.hora}` }));
+      const btnEditar = h('button', { className: 'btn btn-sm btn-warning me-2', text: 'Editar' });
+      btnEditar.addEventListener('click', () => window.editarMesa(index));
+      const btnFinal = h('button', { className: 'btn btn-sm btn-success', text: 'Finalizado' });
+      btnFinal.addEventListener('click', () => window.finalizarMesa(index));
+      const btnOrden = h('button', { className: 'btn btn-sm btn-info me-2', text: 'Generar Orden' });
+      btnOrden.addEventListener('click', () => window.generarOrden(index));
+      body.appendChild(btnEditar);
+      body.appendChild(btnFinal);
+      body.appendChild(btnOrden);
+      card.appendChild(body);
+      col.appendChild(card);
+      contenedor.appendChild(col);
     });
 
     actualizarOpcionesMesa();
@@ -129,25 +145,25 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderizarVistaMesas() {
     const contenedor = document.getElementById('vista-mesas');
     if (!contenedor) return;
-    contenedor.innerHTML = '';
+    contenedor.textContent = '';
 
     mesas.forEach(mesa => {
-      const card = document.createElement('div');
-      card.className = 'col-md-3 mb-3';
-      card.innerHTML = `
-        <div class="card ${mesa.estado === 'Ocupada' ? 'border-danger' : 'border-success'}">
-          <div class="card-body">
-            <h5 class="card-title">Mesa ${mesa.id}</h5>
-            <p class="card-text">Estado: <strong>${mesa.estado}</strong></p>
-            ${mesa.estado === 'Ocupada' ? `
-              <p class="card-text">Cliente: ${mesa.nombre} ${mesa.apellido}</p>
-              <p class="card-text">Hora: ${mesa.hora}</p>
-              <p class="card-text">Alimentos: ${mesa.alimentos.join(', ') || 'Ninguno'}</p>
-            ` : ''}
-          </div>
-        </div>
-      `;
-      contenedor.appendChild(card);
+      const col = h('div', { className: 'col-md-3 mb-3' });
+      const card = h('div', { className: `card ${mesa.estado === 'Ocupada' ? 'border-danger' : 'border-success'}` });
+      const body = h('div', { className: 'card-body' });
+      body.appendChild(h('h5', { className: 'card-title', text: `Mesa ${mesa.id}` }));
+      const pEstado = h('p', { className: 'card-text' });
+      pEstado.appendChild(document.createTextNode('Estado: '));
+      pEstado.appendChild(h('strong', { text: mesa.estado }));
+      body.appendChild(pEstado);
+      if (mesa.estado === 'Ocupada') {
+        body.appendChild(h('p', { className: 'card-text', text: `Cliente: ${mesa.nombre} ${mesa.apellido}` }));
+        body.appendChild(h('p', { className: 'card-text', text: `Hora: ${mesa.hora}` }));
+        body.appendChild(h('p', { className: 'card-text', text: `Alimentos: ${mesa.alimentos.join(', ') || 'Ninguno'}` }));
+      }
+      card.appendChild(body);
+      col.appendChild(card);
+      contenedor.appendChild(col);
     });
   }
 
@@ -155,27 +171,29 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderizarAlimentos() {
     const contenedor = document.getElementById('contenedor-alimentos');
     if (!contenedor) return;
-    contenedor.innerHTML = '';
+    contenedor.textContent = '';
 
     mesas.filter(m => m.estado === 'Ocupada').forEach((mesa, index) => {
-      const card = document.createElement('div');
-      card.className = 'col-md-6 mb-3';
-      card.innerHTML = `
-        <div class="card border-primary">
-          <div class="card-body">
-            <h5 class="card-title">Mesa ${mesa.id}</h5>
-            <p class="card-text">Cliente: ${mesa.nombre} ${mesa.apellido}</p>
-            <form onsubmit="agregarAlimento(event, ${index})" class="d-flex mb-2">
-              <input type="text" class="form-control me-2" placeholder="Agregar alimento" required>
-              <button type="submit" class="btn btn-sm btn-primary">Agregar</button>
-            </form>
-            <ul class="list-group">
-              ${mesa.alimentos.map(alimento => `<li class="list-group-item">${alimento}</li>`).join('')}
-            </ul>
-          </div>
-        </div>
-      `;
-      contenedor.appendChild(card);
+      const col = h('div', { className: 'col-md-6 mb-3' });
+      const card = h('div', { className: 'card border-primary' });
+      const body = h('div', { className: 'card-body' });
+      body.appendChild(h('h5', { className: 'card-title', text: `Mesa ${mesa.id}` }));
+      body.appendChild(h('p', { className: 'card-text', text: `Cliente: ${mesa.nombre} ${mesa.apellido}` }));
+      const form = h('form', { className: 'd-flex mb-2' });
+      const input = h('input', { attrs: { type: 'text', placeholder: 'Agregar alimento', required: 'required' }, className: 'form-control me-2' });
+      const btn = h('button', { className: 'btn btn-sm btn-primary', text: 'Agregar', attrs: { type: 'submit' } });
+      form.appendChild(input);
+      form.appendChild(btn);
+      form.addEventListener('submit', (e) => window.agregarAlimento(e, index));
+      body.appendChild(form);
+      const ul = h('ul', { className: 'list-group' });
+      (mesa.alimentos || []).forEach(alimento => {
+        ul.appendChild(h('li', { className: 'list-group-item', text: alimento }));
+      });
+      body.appendChild(ul);
+      card.appendChild(body);
+      col.appendChild(card);
+      contenedor.appendChild(col);
     });
   }
 
@@ -218,81 +236,25 @@ window.generarOrden = function (index) {
 function renderizarOrdenes() {
   const contenedor = document.getElementById('contenedor-ordenes');
   if (!contenedor) return;
-  contenedor.innerHTML = '';
+  contenedor.textContent = '';
 
   ordenes.forEach(orden => {
-    const card = document.createElement('div');
-    card.className = 'col-md-6 mb-3';
-    card.innerHTML = `
-      <div class="card border-secondary">
-        <div class="card-body">
-          <h5 class="card-title">Orden #${orden.id}</h5>
-          <p class="card-text">Mesa: ${orden.mesa}</p>
-          <p class="card-text">Cliente: ${orden.cliente}</p>
-          <p class="card-text">Alimentos:</p>
-          <ul class="list-group">
-            ${orden.alimentos.map(item => `<li class="list-group-item">${item}</li>`).join('')}
-          </ul>
-        </div>
-      </div>
-    `;
-    contenedor.appendChild(card);
+    const col = h('div', { className: 'col-md-6 mb-3' });
+    const card = h('div', { className: 'card border-secondary' });
+    const body = h('div', { className: 'card-body' });
+    body.appendChild(h('h5', { className: 'card-title', text: `Orden #${orden.id}` }));
+    body.appendChild(h('p', { className: 'card-text', text: `Mesa: ${orden.mesa}` }));
+    body.appendChild(h('p', { className: 'card-text', text: `Cliente: ${orden.cliente}` }));
+    body.appendChild(h('p', { className: 'card-text', text: 'Alimentos:' }));
+    const ul = h('ul', { className: 'list-group' });
+    (orden.alimentos || []).forEach(item => ul.appendChild(h('li', { className: 'list-group-item', text: item })));
+    body.appendChild(ul);
+    card.appendChild(body);
+    col.appendChild(card);
+    contenedor.appendChild(col);
   });
 }
 
 
 
- // --- Función para cerrar sesión ---
- /*
-  function cerrarSesion() {
-    // Eliminar datos de sesión
-    localStorage.removeItem("usuario");
-    sessionStorage.clear();
-
-    // Evitar volver con "atrás"
-    window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-      window.history.go(1);
-    };
-
-    // Redirigir al login
-    window.location.replace("../views/login.html");
-  window.location.replace("/login/login.html");
-  }
-
-  // --- Confirmación antes de cerrar sesión ---
-  document.getElementById("btnCerrarSesion").addEventListener("click", function() {
-    const confirmar = confirm("¿Estás seguro de que quieres cerrar sesión?");
-    if (confirmar) {
-      cerrarSesion();
-    }
-  });
-
-  // --- Verificación de sesión al cargar la página ---
-  document.addEventListener("DOMContentLoaded", function() {
-    const usuario = localStorage.getItem("usuario");
-    if (!usuario) {
-      window.location.replace("../views/login.html");
-    window.location.replace("/login/login.html");
-    }
-  });
-
-  // --- Expiración automática por inactividad ---
-  let tiempoInactividad;
-  const limiteInactividad = 10 * 60 * 1000; // 10 minutos
-
-  function reiniciarTemporizador() {
-    clearTimeout(tiempoInactividad);
-    tiempoInactividad = setTimeout(() => {
-      alert("Tu sesión ha expirado por inactividad.");
-      cerrarSesion();
-    }, limiteInactividad);
-  }
-
-  // Reiniciar temporizador al mover el mouse, presionar teclas, hacer clic o desplazarse
-  window.onload = reiniciarTemporizador;
-  document.onmousemove = reiniciarTemporizador;
-  document.onkeydown = reiniciarTemporizador;
-  document.onclick = reiniciarTemporizador;
-  document.onscroll = reiniciarTemporizador;
-  */
+// (Limpieza) Se removieron bloques comentados sin uso

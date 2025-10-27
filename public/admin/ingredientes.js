@@ -14,8 +14,17 @@ async function cargarUnidades() {
   if (!res.ok) throw new Error('No se pudieron cargar unidades');
     unidades = await res.json();
     const sel = document.getElementById('unidad');
-    sel.innerHTML = '<option value="">Seleccione una unidad…</option>' +
-      unidades.map(u => `<option value="${u.id}">${u.name} (${u.code})</option>`).join('');
+    sel.textContent = '';
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = 'Seleccione una unidad…';
+    sel.appendChild(opt0);
+    unidades.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = String(u.id);
+      opt.textContent = `${u.name} (${u.code})`;
+      sel.appendChild(opt);
+    });
   } catch (err) {
     console.error(err);
     toast('Error cargando unidades', 'error');
@@ -31,7 +40,15 @@ async function listarIngredientes() {
     catalogoIngredientes = data.map(d => ({ id: d.id, name: d.name, unit_code: d.unit_code }));
     // cargar select del modal de ingresos
     const sel = document.getElementById('ingresoIngrediente');
-    if (sel) sel.innerHTML = catalogoIngredientes.map(i => `<option value="${i.id}">${i.name} (${i.unit_code || ''})</option>`).join('');
+    if (sel) {
+      sel.textContent = '';
+      catalogoIngredientes.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = String(i.id);
+        opt.textContent = `${i.name} (${i.unit_code || ''})`;
+        sel.appendChild(opt);
+      });
+    }
     renderTablaIngredientes(data);
   } catch (err) {
     console.error(err);
@@ -41,22 +58,26 @@ async function listarIngredientes() {
 
 function renderTablaIngredientes(ingredientes) {
   const tbody = document.getElementById('tablaIngredientes');
-  tbody.innerHTML = '';
+  tbody.textContent = '';
   ingredientes.forEach(ing => {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td>${ing.id}</td>
-      <td>${ing.name}</td>
-      <td>${ing.unit_name} (${ing.unit_code})</td>
-      <td>${ing.stock_qty}</td>
-      <td>${ing.min_qty}</td>
-      <td>${ing.active ? 'Sí' : 'No'}</td>
-      <td>
-        <button class="btn btn-sm btn-primary me-2" data-action="edit" data-id="${ing.id}">Editar</button>
-        <button class="btn btn-sm btn-danger" data-action="del" data-id="${ing.id}">Eliminar</button>
-      </td>
-    `;
-    tbody.appendChild(fila);
+    const tr = document.createElement('tr');
+    const tdId = document.createElement('td'); tdId.textContent = String(ing.id);
+    const tdName = document.createElement('td'); tdName.textContent = ing.name;
+    const tdUnit = document.createElement('td'); tdUnit.textContent = `${ing.unit_name} (${ ing.unit_code })`;
+    const tdStock = document.createElement('td'); tdStock.textContent = String(ing.stock_qty);
+    const tdMin = document.createElement('td'); tdMin.textContent = String(ing.min_qty);
+    const tdAct = document.createElement('td'); tdAct.textContent = ing.active ? 'Sí' : 'No';
+    const tdAcc = document.createElement('td');
+    const btnE = document.createElement('button');
+    btnE.className = 'btn btn-sm btn-primary me-2'; btnE.textContent = 'Editar';
+    btnE.setAttribute('data-action','edit'); btnE.setAttribute('data-id', String(ing.id));
+    const btnD = document.createElement('button');
+    btnD.className = 'btn btn-sm btn-danger'; btnD.textContent = 'Eliminar';
+    btnD.setAttribute('data-action','del'); btnD.setAttribute('data-id', String(ing.id));
+    tdAcc.appendChild(btnE); tdAcc.appendChild(btnD);
+    tr.appendChild(tdId); tr.appendChild(tdName); tr.appendChild(tdUnit);
+    tr.appendChild(tdStock); tr.appendChild(tdMin); tr.appendChild(tdAct); tr.appendChild(tdAcc);
+    tbody.appendChild(tr);
   });
 
   // Delegación de eventos
@@ -164,7 +185,15 @@ window.addEventListener('seccion-mostrada', () => {
     ingresos = [];
     renderTablaIngresos();
     const sel = document.getElementById('batch-ingresoIngrediente');
-    if (sel) sel.innerHTML = catalogoIngredientes.map(i => `<option value="${i.id}">${i.name} (${i.unit_code || ''})</option>`).join('');
+    if (sel) {
+      sel.textContent = '';
+      catalogoIngredientes.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = String(i.id);
+        opt.textContent = `${i.name} (${i.unit_code || ''})`;
+        sel.appendChild(opt);
+      });
+    }
   }
 });
 
@@ -181,15 +210,16 @@ document.getElementById('batch-agregarIngresoIngrediente')?.addEventListener('cl
 function renderTablaIngresos() {
   const tbody = document.getElementById('batch-tablaIngresos');
   if (!tbody) return;
-  tbody.innerHTML = '';
+  tbody.textContent = '';
   ingresos.forEach((r, idx) => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.name ?? ''}</td>
-      <td>${r.qty}</td>
-      <td>${r.unit_code ?? ''}</td>
-      <td><button class="btn btn-sm btn-outline-danger" data-index="${idx}">Quitar</button></td>
-    `;
+    const tdN = document.createElement('td'); tdN.textContent = r.name ?? '';
+    const tdQ = document.createElement('td'); tdQ.textContent = String(r.qty);
+    const tdU = document.createElement('td'); tdU.textContent = r.unit_code ?? '';
+    const tdB = document.createElement('td');
+    const btn = document.createElement('button'); btn.className = 'btn btn-sm btn-outline-danger'; btn.textContent = 'Quitar'; btn.setAttribute('data-index', String(idx));
+    tdB.appendChild(btn);
+    tr.appendChild(tdN); tr.appendChild(tdQ); tr.appendChild(tdU); tr.appendChild(tdB);
     tbody.appendChild(tr);
   });
   tbody.onclick = (e) => {

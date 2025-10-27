@@ -20,20 +20,36 @@ function renderTablaPlatos(items) {
   const tbody = document.getElementById('tablaPlatos');
   tbody.innerHTML = '';
   items.forEach(it => {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td>${it.id}</td>
-      <td>${it.name}</td>
-      <td>${it.description ?? ''}</td>
-      <td>Q${Number(it.price).toFixed(2)}</td>
-      <td>${it.photo_url ? `<img src="${it.photo_url}" alt="Foto" style="width:60px;height:40px;object-fit:cover;">` : ''}</td>
-      <td>${it.active ? 1 : 0}</td>
-      <td>
-        <button class="btn btn-sm btn-primary me-2" data-action="edit" data-id="${it.id}">Editar</button>
-        ${it.active ? `<button class="btn btn-sm btn-danger" data-action="del" data-id="${it.id}">Desactivar</button>` : `<button class="btn btn-sm btn-success" data-action="activar" data-id="${it.id}">Activar</button>`}
-      </td>
-    `;
-    tbody.appendChild(fila);
+    const tr = document.createElement('tr');
+    const tdId = document.createElement('td'); tdId.textContent = it.id;
+    const tdName = document.createElement('td'); tdName.textContent = it.name;
+    const tdDesc = document.createElement('td'); tdDesc.textContent = it.description ?? '';
+    const tdPrice = document.createElement('td'); tdPrice.textContent = 'Q' + Number(it.price).toFixed(2);
+    const tdPhoto = document.createElement('td');
+    if (it.photo_url) {
+      const img = document.createElement('img');
+      img.className = 'thumb-60x40';
+      img.alt = 'Foto';
+      img.src = it.photo_url;
+      tdPhoto.appendChild(img);
+    }
+    const tdActive = document.createElement('td'); tdActive.textContent = it.active ? '1' : '0';
+    const tdActions = document.createElement('td');
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'btn btn-sm btn-primary me-2';
+    btnEdit.dataset.action = 'edit';
+    btnEdit.dataset.id = it.id;
+    btnEdit.textContent = 'Editar';
+    tdActions.appendChild(btnEdit);
+    const btnToggle = document.createElement('button');
+    btnToggle.className = 'btn btn-sm ' + (it.active ? 'btn-danger' : 'btn-success');
+    btnToggle.dataset.action = it.active ? 'del' : 'activar';
+    btnToggle.dataset.id = it.id;
+    btnToggle.textContent = it.active ? 'Desactivar' : 'Activar';
+    tdActions.appendChild(btnToggle);
+
+    tr.append(tdId, tdName, tdDesc, tdPrice, tdPhoto, tdActive, tdActions);
+    tbody.appendChild(tr);
   });
 
   tbody.onclick = async (e) => {
@@ -208,14 +224,18 @@ function renderTablaRecetaInline() {
   if (!tbody) return;
   tbody.innerHTML = '';
   recetaInline.forEach((r, idx) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${r.name ?? ''}</td>
-      <td>${r.qty}</td>
-      <td>${r.unit_code ?? ''}</td>
-      <td><button class="btn btn-sm btn-outline-danger" data-index="${idx}">Quitar</button></td>
-    `;
-    tbody.appendChild(row);
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td'); tdName.textContent = r.name ?? '';
+    const tdQty = document.createElement('td'); tdQty.textContent = r.qty;
+    const tdUnit = document.createElement('td'); tdUnit.textContent = r.unit_code ?? '';
+    const tdAct = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-outline-danger';
+    btn.dataset.index = String(idx);
+    btn.textContent = 'Quitar';
+    tdAct.appendChild(btn);
+    tr.append(tdName, tdQty, tdUnit, tdAct);
+    tbody.appendChild(tr);
   });
   tbody.onclick = (e) => {
     const btn = e.target.closest('button');
@@ -230,14 +250,18 @@ function renderTablaReceta(items) {
   const tbody = document.getElementById('tablaReceta');
   tbody.innerHTML = '';
   items.forEach((r, idx) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${r.name ?? ''}</td>
-      <td>${r.qty}</td>
-      <td>${r.unit_code ?? ''}</td>
-      <td><button class="btn btn-sm btn-outline-danger" data-index="${idx}">Quitar</button></td>
-    `;
-    tbody.appendChild(row);
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td'); tdName.textContent = r.name ?? '';
+    const tdQty = document.createElement('td'); tdQty.textContent = r.qty;
+    const tdUnit = document.createElement('td'); tdUnit.textContent = r.unit_code ?? '';
+    const tdAct = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-outline-danger';
+    btn.dataset.index = String(idx);
+    btn.textContent = 'Quitar';
+    tdAct.appendChild(btn);
+    tr.append(tdName, tdQty, tdUnit, tdAct);
+    tbody.appendChild(tr);
   });
   tbody.onclick = (e) => {
     const btn = e.target.closest('button');

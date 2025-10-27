@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
-import { ping, pool } from './db.js';
+import { ping, pool, ensureReservationSchema } from './db.js';
 import authRouter from './routes/auth.routes.js';
 import { verifyToken, requireRole } from './middleware/auth.js';
 
@@ -184,6 +184,8 @@ const PORT = process.env.PORT || 4000;
 // Inicializar todo y arrancar servidor con espera de DB
 try {
   await waitForDatabase();
+  // Asegurar esquema mínimo para mesas/reservas/facturas
+  await ensureReservationSchema();
   await ensureAuthSetup();
   app.listen(PORT, () => {
     console.log(`Backend listening on port ${PORT}`);

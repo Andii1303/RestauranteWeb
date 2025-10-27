@@ -1,0 +1,75 @@
+# Proyecto Restaurante - Archivo de Versiones
+### Criterio de versionado:
+- Se utiliza el esquema SemVer (Mayor.Menor.Patch).
+- Cambios mayores: refactorizaciones estructurales, nuevas funcionalidades principales.
+- Cambios menores: mejoras en la experiencia de usuario, correcciones de bugs, integración de utilidades compartidas.
+- Patch: hotfixes o correcciones menores sin impacto en la API ni en la estructura principal.
+
+
+## Versión 1.0.0 (26/10/2025)
+- Estructura inicial del proyecto backend y frontend.
+- Implementación de base de datos y endpoints principales para reservas, facturación y usuarios.
+- Integración de Docker para despliegue y desarrollo local.
+
+## Versión 1.1.0 (26/10/2025)
+- Refactorización de la lógica del carrito de compras.
+- Creación de `public/cliente/cart-lib.js` para centralizar la gestión del carrito (agregar, eliminar, sincronizar, hidratar desde backend, actualizar badge).
+- Corrección de la agregación de cantidades y subtotales en el backend (`GET /api/facturas/:id/detalles`).
+- Sincronización automática del carrito y badge en todas las páginas relevantes, sin necesidad de refrescar manualmente.
+- Pruebas de integración y validación de la experiencia de usuario en el flujo de reservas y compras.
+
+**Versión** 1.1.0
+Se han completado la centralización y sincronización automática del carrito, integración backend-frontend, y corrección de bugs críticos en 
+la experiencia de usuario.
+
+## Versión 1.2.0 (26/10/2025)
+- Nueva UX de reservas: selección múltiple de mesas en `public/reserve/reserve.html` con botón Continuar.
+- Diálogo informativo por mesa (disponibilidad por fecha y hora, capacidad, sillas extra posibles) y selección/deselección.
+- Endpoints de mesas: `POST /api/mesas/ensure-defaults`, `GET /api/mesas/availability`, `GET /api/mesas/:nombre/details`.
+- Flujo de reserva con múltiples mesas usando `POST /api/facturas/draft-from-mesa` con `mesas_csv` y franja horaria.
+
+## Versión 1.2.1 (26/10/2025)
+- Inicialización automática de esquema en base de datos para mesas/reservas/facturación.
+- Añadido `ensureReservationSchema()` en `src/db.js` y ejecución al iniciar en `src/index.js`.
+- Corrige errores 500 al consultar detalles/disponibilidad de mesas cuando las tablas aún no existían.
+- Estilo básico `.btn-primary` en `public/reserve/style.css` para mejorar la visualización del diálogo y el botón Continuar.
+
+## Versión 1.2.2 (26/10/2025)
+- Reserva UI: el diálogo ahora tiene z-index elevado para quedar por encima de las mesas.
+- Fallbacks robustos en `reserve.js` para obtener detalles de mesa usando `/api/mesas` y `/api/mesas/availability` si `/api/mesas/:nombre/details` no está disponible.
+
+## Versión 1.3.0 (26/10/2025)
+- Orden general de `public/`: separación estricta de HTML, CSS y JS.
+- Reservas: estilos movidos a `reserve/style.css`, diálogo presente en HTML, JS sin HTML ni estilos embebidos.
+- Cliente inicio: se eliminan estilos inline, se usan templates para tarjetas y clases en `Styles.css`.
+- Menú cliente: se agregan templates y clases (`menu.css`) para eliminar estilos inline y strings HTML.
+- Login: se reemplaza `style="display:none"` por clase `.d-none`.
+- Mesero/Admin: barras laterales usan `.sidebar-fixed` y utilidades; se quitan estilos inline.
+- Admin: miniaturas con clase `.thumb-60x40`; cajas con `.bg-section`.
+
+## Versión 1.3.1 (27/10/2025)
+- Cliente: carrito refactorizado para usar `<template>` y un archivo `carrito.js` dedicado; sin construcción de HTML en JS.
+- Pagar: `renderSummary()` ahora crea nodos DOM en lugar de usar `innerHTML`.
+- Mesero: reemplazo completo de `innerHTML` por creación de elementos DOM y eventos programáticos.
+- Cocina: tarjetas de órdenes generadas con DOM, no con cadenas HTML.
+- Admin/Ingredientes: selects y tablas construidos con DOM; eliminación de strings HTML.
+- Admin/Usuarios: tablas generadas con DOM y delegación de eventos; sin `onclick` inline.
+
+## Versión 1.3.2 (27/10/2025)
+- Nueva carpeta `public/payments` para centralizar páginas y assets de pagos.
+- Movidos `pagar.html` y `pago-confirmacion.html` a `public/payments/` y extraído JS a `payments.js`.
+- Añadido `payments.css` para estilos específicos de pagos; se mantienen utilidades compartidas en `/cliente/Styles.css`.
+- Actualizados enlaces del carrito para ir a `/payments/pagar.html`.
+- Páginas antiguas en `/cliente/` ahora redirigen a las nuevas rutas.
+
+## Versión 1.3.3 (27/10/2025)
+- Limpieza de código: eliminación de bloques comentados obsoletos en `public/waiter/mesero.js` y `public/kitchen/index.js`.
+- Unificación de scripts de usuarios en Admin: `usuarios-admin.js` es el activo; `Scripusuarios.js` marcado para eliminación al no estar referenciado.
+- Remoción de archivos sin función en cliente: se reemplazaron por rutas de pagos en `/payments/`; se pueden eliminar definitivamente si no se requiere compatibilidad.
+
+## Versión 1.3.4 (27/10/2025)
+- Eliminación física de archivos obsoletos:
+	- `public/cliente/pagar.html`
+	- `public/cliente/pago-confirmacion.html`
+	- `public/admin/Scripusuarios.js`
+- Todos los flujos apuntan ahora a `/payments/*` y `usuarios-admin.js` en Admin.

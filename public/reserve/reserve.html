@@ -11,20 +11,23 @@
         <h2>Mesas para reservar</h2>
 
         <!-- Filtro de fecha y horas (intervalos de 30 minutos) -->
-        <div class="container" style="max-width:980px;margin:0 auto 16px auto;">
-            <div class="card" style="padding:12px;">
-                <div class="row" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="container reserve-container">
+            <div class="card reserve-card">
+                <div class="row reserve-row">
                     <div class="col">
                         <label for="reserva-fecha">Fecha</label>
-                        <input id="reserva-fecha" type="date" class="form-control" style="min-width:200px;">
+                        <input id="reserva-fecha" type="date" class="form-control minw-200">
                     </div>
                     <div class="col">
                         <label for="reserva-inicio">Check-in</label>
-                        <select id="reserva-inicio" class="form-select" style="min-width:180px;"></select>
+                        <select id="reserva-inicio" class="form-select minw-180"></select>
                     </div>
                     <div class="col">
                         <label for="reserva-fin">Check-out</label>
-                        <select id="reserva-fin" class="form-select" style="min-width:180px;"></select>
+                        <select id="reserva-fin" class="form-select minw-180"></select>
+                    </div>
+                    <div>
+                        <button id="btn-continuar" class="btn-primary">Continuar</button>
                     </div>
                 </div>
                 <small class="text-muted">Los horarios se muestran en intervalos de 30 minutos. Seleccione la fecha y el rango de la reserva.</small>
@@ -33,11 +36,27 @@
 
     <div class="plano-container">
         <img src="/Imajenes/reserveImg/planoRestaurante.png" alt="Plano del Restaurante" class="plano-img">
-        <!-- Mesas (duplicadas con posiciones simples) -->
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_A" alt="Mesa 4 A" style="top:38%;left:28%;width:110px;">
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_B" alt="Mesa 4 B" style="top:38%;left:58%;width:110px;">
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_C" alt="Mesa 4 C" style="top:65%;left:35%;width:110px;">
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_D" alt="Mesa 4 D" style="top:65%;left:65%;width:110px;">
+        <!-- Mesas (posiciones definidas en CSS por data-mesa-id) -->
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_A" alt="Mesa 4 A">
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_B" alt="Mesa 4 B">
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_C" alt="Mesa 4 C">
+        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_D" alt="Mesa 4 D">
+    </div>
+
+    <!-- Diálogo de mesa (estructura HTML; estilos en CSS; lógica en JS) -->
+    <div id="mesa-dialog" class="dlg-overlay" aria-hidden="true">
+        <div class="dlg-card">
+            <h3 id="dlg-title" class="dlg-title">Mesa</h3>
+            <div id="dlg-body" class="dlg-body">
+                <p><strong>Estado:</strong> <span id="dlg-estado">-</span></p>
+                <p><strong>Capacidad:</strong> <span id="dlg-capacidad">-</span> sillas</p>
+                <p><strong>Sillas extra posibles:</strong> <span id="dlg-extras">-</span></p>
+            </div>
+            <div class="dlg-actions">
+                <button id="dlg-cancel" class="btn">Cerrar</button>
+                <button id="dlg-select" class="btn-primary">Seleccionar</button>
+            </div>
+        </div>
     </div>
 
                 <script src="/reserve/reserve.js"></script>

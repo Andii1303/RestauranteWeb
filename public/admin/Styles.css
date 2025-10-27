@@ -1,3 +1,8 @@
+/* Utilidades comunes admin */
+.sidebar-fixed { width: 250px; min-height: 100vh; }
+.d-none { display: none !important; }
+.bg-section { background: #f8f9fa; }
+.thumb-60x40 { width: 60px; height: 40px; object-fit: cover; }
 body {
   background-color: azure;
 }
