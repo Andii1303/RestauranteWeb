@@ -88,62 +88,24 @@
   </footer>
 
   <!-- Scripts -->
+  <script src="/cliente/cart-lib.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const carritoContenido = document.getElementById('carrito-contenido');
-      const cartCount = document.getElementById('cart-count');
       const vaciarBtn = document.getElementById('vaciar-carrito');
       const totalItemsEl = document.getElementById('total-items');
       const totalPrecioEl = document.getElementById('total-precio');
       const contComprando = document.getElementById('continuar-comprando');
       const pagarBtn = document.getElementById('pagar-carrito');
 
-      contComprando.addEventListener('click', () => {
-        window.location.href = '/cliente/menu.html';
-      });
+      let carrito = { items: {} };
 
-      pagarBtn.addEventListener('click', () => {
-        // Ir a la página de pago
-        window.location.href = '/cliente/pagar.html';
-
-
-      });
-
-      function getCart() {
-        const raw = localStorage.getItem('carritoV2') || localStorage.getItem('carrito');
-        let cart;
-        try { cart = raw ? JSON.parse(raw) : null; } catch {}
-        if (Array.isArray(cart)) {
-          const items = {};
-          for (const it of cart) {
-            const key = (it.id != null ? String(it.id) : it.nombre);
-            if (!items[key]) items[key] = { id: it.id ?? null, nombre: it.nombre, qty: 0, price: it.price ?? 0 };
-            items[key].qty += 1;
-          }
-          cart = { items };
-          localStorage.setItem('carritoV2', JSON.stringify(cart));
-          localStorage.removeItem('carrito');
-        }
-        if (!cart || !cart.items) cart = { items: {} };
-        return cart;
-      }
-
-      function setCart(cart) {
-        localStorage.setItem('carritoV2', JSON.stringify(cart));
-        cartCount.textContent = totalQty(cart);
-        localStorage.setItem('cartCount', String(totalQty(cart)));
-      }
-
-      function totalQty(cart) { return Object.values(cart.items).reduce((a, it) => a + (Number(it.qty)||0), 0); }
-      function totalPrecio(cart) { return Object.values(cart.items).reduce((a, it) => a + (Number(it.qty||0) * Number(it.price||0)), 0); }
-
-      let carrito = getCart();
-      cartCount.textContent = totalQty(carrito);
+      contComprando.addEventListener('click', () => { window.location.href = '/cliente/menu.html'; });
+      pagarBtn.addEventListener('click', () => { window.location.href = '/cliente/pagar.html'; });
 
       function renderCarrito() {
         carritoContenido.innerHTML = '';
-
-        const entries = Object.entries(carrito.items);
+        const entries = Object.entries(carrito.items || {});
         if (entries.length === 0) {
           carritoContenido.innerHTML = '<p class="text-center">Tu carrito está vacío.</p>';
           totalItemsEl.textContent = '0';
@@ -151,7 +113,7 @@
           return;
         }
 
-        entries.forEach(([key, producto], index) => {
+        entries.forEach(([key, producto]) => {
           const card = document.createElement('div');
           card.className = 'col-md-4';
           card.innerHTML = `
@@ -172,46 +134,54 @@
           carritoContenido.appendChild(card);
         });
 
-        // Listeners para +/- y quitar
+        totalItemsEl.textContent = String(CartLib.count(carrito));
+        totalPrecioEl.textContent = 'Q' + CartLib.total(carrito).toFixed(2);
+
         document.querySelectorAll('.qty-incr').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             const key = btn.getAttribute('data-key');
             if (!carrito.items[key]) return;
             carrito.items[key].qty += 1;
-            setCart(carrito);
+            await CartLib.sync(localStorage.getItem('facturaId'), carrito);
             renderCarrito();
+            CartLib.updateBadge();
           });
         });
         document.querySelectorAll('.qty-decr').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             const key = btn.getAttribute('data-key');
             if (!carrito.items[key]) return;
             carrito.items[key].qty -= 1;
             if (carrito.items[key].qty <= 0) delete carrito.items[key];
-            setCart(carrito);
+            await CartLib.sync(localStorage.getItem('facturaId'), carrito);
             renderCarrito();
+            CartLib.updateBadge();
           });
         });
         document.querySelectorAll('.eliminar').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             const key = btn.getAttribute('data-key');
             delete carrito.items[key];
-            setCart(carrito);
+            await CartLib.sync(localStorage.getItem('facturaId'), carrito);
             renderCarrito();
+            CartLib.updateBadge();
           });
         });
-
-        totalItemsEl.textContent = String(totalQty(carrito));
-        totalPrecioEl.textContent = 'Q' + totalPrecio(carrito).toFixed(2);
       }
 
-      vaciarBtn.addEventListener('click', () => {
-        carrito = { items: {} };
-        setCart(carrito);
+      vaciarBtn.addEventListener('click', async () => {
+        const fid = localStorage.getItem('facturaId');
+        carrito = await CartLib.clear(fid);
         renderCarrito();
+        CartLib.updateBadge();
       });
 
-      renderCarrito();
+      (async () => {
+        const fid = localStorage.getItem('facturaId');
+        carrito = await CartLib.hydrate(fid);
+        renderCarrito();
+        CartLib.updateBadge();
+      })();
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

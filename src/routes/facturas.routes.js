@@ -115,6 +115,34 @@ router.post('/api/facturas/:id/detalles', async (req, res) => {
   }
 });
 
+// Obtener detalles de una factura
+router.get('/api/facturas/:id/detalles', async (req, res) => {
+  try {
+    const facturaId = Number(req.params.id);
+    if (!facturaId) return res.status(400).json({ ok:false, message:'factura id inválido' });
+    // Agregar por item para evitar múltiples filas del mismo producto al hidratar el carrito
+    const [rows] = await pool.query(
+      `SELECT 
+         MIN(id) AS id,
+         item_type,
+         menu_item_id,
+         nombre,
+         SUM(cantidad) AS cantidad,
+         CASE WHEN SUM(cantidad) > 0 THEN ROUND(SUM(subtotal)/SUM(cantidad), 2) ELSE MAX(precio_unit) END AS precio_unit,
+         SUM(subtotal) AS subtotal
+       FROM detalles_factura
+       WHERE factura_id = ?
+       GROUP BY item_type, menu_item_id, nombre
+       ORDER BY MIN(id)`
+      , [facturaId]
+    );
+    const [[{ total }]] = await pool.query('SELECT IFNULL(SUM(subtotal),0) AS total FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+    res.json({ ok:true, items: rows, total });
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
 // Checkout: completar factura con datos del cliente e items opcionales, y marcar status
 router.post('/api/facturas/checkout', async (req, res) => {
   const conn = await pool.getConnection();
@@ -144,15 +172,18 @@ router.post('/api/facturas/checkout', async (req, res) => {
       );
     }
 
-    // Insertar items (si vienen), evitando duplicados sólo si el cliente lo controla desde frontend
-    for (const it of items) {
-      const cant = Number(it?.cantidad) || 1;
-      const pu = Number(it?.precio_unit) || 0;
-      const subtotal = cant * pu;
-      await conn.query(
-        'INSERT INTO detalles_factura (factura_id, item_type, menu_item_id, nombre, cantidad, precio_unit, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [facturaId, it?.item_type || 'PLATO', it?.menu_item_id || null, it?.nombre || 'Item', cant, pu, subtotal]
-      );
+    // Reemplazar items si vienen: limpiar y volver a insertar para reflejar el carrito actual
+    if (items.length > 0) {
+      await conn.query('DELETE FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+      for (const it of items) {
+        const cant = Number(it?.cantidad) || 1;
+        const pu = Number(it?.precio_unit) || 0;
+        const subtotal = cant * pu;
+        await conn.query(
+          'INSERT INTO detalles_factura (factura_id, item_type, menu_item_id, nombre, cantidad, precio_unit, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [facturaId, it?.item_type || 'PLATO', it?.menu_item_id || null, it?.nombre || 'Item', cant, pu, subtotal]
+        );
+      }
     }
 
     // Recalcular total y actualizar status
@@ -171,6 +202,49 @@ router.post('/api/facturas/checkout', async (req, res) => {
     res.status(500).json({ ok: false, message: err.message });
   } finally {
     conn.release();
+  }
+});
+
+// Reemplazar (sin checkout) los detalles de una factura por un estado deseado del carrito
+router.post('/api/facturas/:id/detalles/sync', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const facturaId = Number(req.params.id);
+    if (!facturaId) return res.status(400).json({ ok:false, message:'factura id inválido' });
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+    for (const it of items) {
+      const cant = Number(it?.cantidad) || 1;
+      const pu = Number(it?.precio_unit) || 0;
+      const subtotal = cant * pu;
+      await conn.query(
+        'INSERT INTO detalles_factura (factura_id, item_type, menu_item_id, nombre, cantidad, precio_unit, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [facturaId, it?.item_type || 'PLATO', it?.menu_item_id || null, it?.nombre || 'Item', cant, pu, subtotal]
+      );
+    }
+    const [[{ total }]] = await conn.query('SELECT IFNULL(SUM(subtotal),0) AS total FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+    await conn.query('UPDATE facturas SET total = ? WHERE id = ?', [total, facturaId]);
+    await conn.commit();
+    res.json({ ok:true, total });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ ok:false, message: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+// Eliminar todos los detalles de una factura (p.ej. vaciar carrito)
+router.delete('/api/facturas/:id/detalles', async (req, res) => {
+  try {
+    const facturaId = Number(req.params.id);
+    if (!facturaId) return res.status(400).json({ ok:false, message:'factura id inválido' });
+    await pool.query('DELETE FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+    await pool.query('UPDATE facturas SET total = 0 WHERE id = ?', [facturaId]);
+    res.json({ ok:true });
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
   }
 });
 

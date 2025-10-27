@@ -122,17 +122,16 @@
         const raw = localStorage.getItem('carritoV2');
         let cart = raw ? JSON.parse(raw) : { items: {} };
         const itemsArr = [];
-        if (!facturaId) {
-          for (const k of Object.keys(cart.items||{})){
-            const it = cart.items[k];
-            itemsArr.push({
-              menu_item_id: it.id ?? null,
-              nombre: it.nombre,
-              cantidad: Number(it.qty||0),
-              precio_unit: Number(it.price||0),
-              item_type: 'PLATO'
-            });
-          }
+        // Siempre enviamos items para que el backend reemplace y no quede basura
+        for (const k of Object.keys(cart.items||{})){
+          const it = cart.items[k];
+          itemsArr.push({
+            menu_item_id: it.id ?? null,
+            nombre: it.nombre,
+            cantidad: Number(it.qty||0),
+            precio_unit: Number(it.price||0),
+            item_type: 'PLATO'
+          });
         }
 
         const payload = {
