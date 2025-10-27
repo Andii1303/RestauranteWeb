@@ -1,38 +1,125 @@
-
-.plano-container {
-	position: relative;
-	width: 600px;
-	margin: 0 auto;
+body {
+  background-color: azure;
 }
 
+.navbar-brand {
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.nav-link {
+  transition: 0.3s;
+}
+
+.nav-link:hover {
+  color: #ffc107 !important; /* Amarillo Bootstrap */
+}
+
+.btn-amarillo {
+  background-color: #ffc107;
+  color: black;
+  border: none;
+}
+
+.btn-amarillo:hover {
+  background-color: #e0a800;
+  color: black;
+}
+h1{
+  font-family: Arial, Helvetica, sans-serif
+}
+.menu_image_container{
+  width: 100%;
+  height: 95vh;
+
+}
+.menu_image_container>img{
+  width: 100%;
+  height: 100%;
+
+}
+
+/* Botón hamburguesa amarillo con líneas negras */
+.custom-toggler {
+  background-color: #ffc107; /* Amarillo */
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem; /* Esquinas redondeadas */
+}
+
+/* Ícono de 3 líneas negras */
+.custom-toggler .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='black' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+/* Utilidades y ajustes para index.html */
+.hero-img { height: 700px; width: 1200px; object-fit: cover; }
+.d-none { display: none !important; }
+.card-img-placeholder { height: 180px; background: #f1f3f5; }
+.card-desc { min-height: 3em; }
+.card-img-top-holder { min-height: 180px; }
+
+/* Sidebar fija común para paneles */
+.sidebar-fixed { width: 250px; min-height: 100vh; }
+
+/* Pago */
+.d-block { display: block !important; }
+.d-none { display: none !important; }
+.maxw-640 { max-width: 640px; }
+
+
+/* Contenedor del plano */
+.plano-container {
+	position: relative;
+	width: 900px;
+	max-width: 100%;
+	margin: 0 auto;
+	background-color: #eaeaea;
+	border: 2px solid #ccc;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+/* Imagen base del plano */
 .plano-img {
 	width: 100%;
 	display: block;
 }
 
+/* Imágenes de las mesas */
 .mesa-img {
 	position: absolute;
-	top: 40%;
-	left: 50%;
-	width: 120px;
 	transform: translate(-50%, -50%);
-	z-index: 2;
 	cursor: pointer;
+	transition: transform 0.2s ease, filter 0.2s ease;
+	z-index: 2;
+}
+
+/* Tamaños base según tipo */
+.mesa-img[src*="MesaPara2.png"] { width: 80px; }
+.mesa-img[src*="MesaPara4.png"] { width: 100px; }
+.mesa-img[src*="MesaPara6.png"] { width: 120px; }
+.mesa-img[src*="Mesapara8.png"] { width: 140px; }
+
+/* Hover */
+.mesa-img:hover {
+	transform: translate(-50%, -50%) scale(1.05);
+	filter: brightness(1.1);
 }
 
 /* Estados */
 .mesa-selected {
-  outline: 4px solid #2a9d8f;
-  outline-offset: -4px;
-  border-radius: 8px;
+	outline: 4px solid #2a9d8f;
+	outline-offset: -4px;
+	border-radius: 8px;
 }
 
 .mesa-disabled {
-  filter: grayscale(1) opacity(0.6);
-  pointer-events: none;
+	filter: grayscale(1) opacity(0.6);
+	pointer-events: none;
 }
 
-/* Botón primario básico (usado en diálogo y continuar) */
+/* Botones */
 .btn-primary {
 	background: #222;
 	color: #f9f9f9;
@@ -45,14 +132,14 @@
 	background: #333;
 }
 
-/* Layout utilitario del filtro de fecha/horas */
+/* Layout utilitario */
 .reserve-container { max-width: 980px; margin: 0 auto 16px auto; }
 .reserve-card { padding: 12px; }
 .reserve-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
 .minw-200 { min-width: 200px; }
 .minw-180 { min-width: 180px; }
 
-/* Diálogo de mesa */
+/* Diálogo */
 .dlg-overlay {
 	position: fixed;
 	inset: 0;
@@ -63,15 +150,41 @@
 	z-index: 9999;
 }
 .dlg-overlay.open { display: flex; }
-.dlg-card { background: #fff; padding: 16px; border-radius: 8px; min-width: 320px; max-width: 90vw; }
+.dlg-card {
+	background: #fff;
+	padding: 16px;
+	border-radius: 8px;
+	min-width: 320px;
+	max-width: 90vw;
+}
 .dlg-title { margin: 0 0 8px 0; }
 .dlg-body { font-size:14px; line-height:1.4; margin-bottom:12px; }
 .dlg-actions { display:flex; gap:8px; justify-content:flex-end; }
-.btn { padding:6px 10px; border:1px solid #ccc; background:#f5f5f5; border-radius:6px; cursor:pointer; }
+.btn {
+	padding:6px 10px;
+	border:1px solid #ccc;
+	background:#f5f5f5;
+	border-radius:6px;
+	cursor:pointer;
+}
 .btn:hover { background:#eee; }
 
-/* Posiciones de mesas por data-mesa-id */
-.mesa-img[data-mesa-id="MESA_4_A"] { top:38%; left:28%; width:110px; }
-.mesa-img[data-mesa-id="MESA_4_B"] { top:38%; left:58%; width:110px; }
-.mesa-img[data-mesa-id="MESA_4_C"] { top:65%; left:35%; width:110px; }
-.mesa-img[data-mesa-id="MESA_4_D"] { top:65%; left:65%; width:110px; }
+/* === POSICIONES EXACTAS (según PlanoDistMesas.png) === */
+.mesa-img[data-mesa-id="MESA_4_A"] { top:10%; left:22%; }
+.mesa-img[data-mesa-id="MESA_4_B"] { top:10%; left:40%; }
+.mesa-img[data-mesa-id="MESA_4_C"] { top:33%; left:22%; }
+.mesa-img[data-mesa-id="MESA_4_D"] { top:33%; left:40%; }
+
+.mesa-img[data-mesa-id="MESA_4_E"] { top:10%; left:65%; transform:translate(-50%, -50%) rotate(0deg); }
+.mesa-img[data-mesa-id="MESA_4_F"] { top:10%; left:82%; transform:translate(-50%, -50%) rotate(0deg); }
+.mesa-img[data-mesa-id="MESA_4_G"] { top:33%; left:65%; transform:translate(-50%, -50%) rotate(0deg); }
+.mesa-img[data-mesa-id="MESA_4_H"] { top:33%; left:82%; transform:translate(-50%, -50%) rotate(0deg); }
+
+.mesa-img[data-mesa-id="MESA_2_A"] { top:70%; left:5%; }
+.mesa-img[data-mesa-id="MESA_2_B"] { top:85%; left:5%; }
+.mesa-img[data-mesa-id="MESA_2_C"] { top:85%; left:18%; }
+
+.mesa-img[data-mesa-id="BARRA"] { top:70%; left:40%; width:150px; transform:translate(-50%, -50%) rotate(90deg); }
+
+.mesa-img[data-mesa-id="MESA_8_A"] { top:80%; left:75%; width:160px; }
+

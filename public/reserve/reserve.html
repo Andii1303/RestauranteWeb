@@ -1,64 +1,171 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservacion</title>
-    <link rel="stylesheet" href="/reserve/style.css">
-</head>
-<body>
-        <h1>Reservaciones</h1>
-        <h2>Mesas para reservar</h2>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservaciones | MiRestaurante</title>
 
-        <!-- Filtro de fecha y horas (intervalos de 30 minutos) -->
-        <div class="container reserve-container">
-            <div class="card reserve-card">
-                <div class="row reserve-row">
-                    <div class="col">
-                        <label for="reserva-fecha">Fecha</label>
-                        <input id="reserva-fecha" type="date" class="form-control minw-200">
-                    </div>
-                    <div class="col">
-                        <label for="reserva-inicio">Check-in</label>
-                        <select id="reserva-inicio" class="form-select minw-180"></select>
-                    </div>
-                    <div class="col">
-                        <label for="reserva-fin">Check-out</label>
-                        <select id="reserva-fin" class="form-select minw-180"></select>
-                    </div>
-                    <div>
-                        <button id="btn-continuar" class="btn-primary">Continuar</button>
-                    </div>
-                </div>
-                <small class="text-muted">Los horarios se muestran en intervalos de 30 minutos. Seleccione la fecha y el rango de la reserva.</small>
-            </div>
+  <!-- Bootstrap y estilos -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/reserve/style.css">
+</head>
+
+<body>
+      <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+  <a class="navbar-brand" href="/cliente/index.html">MiRestaurante</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarContenido">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" href="/cliente/index.html">Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/cliente/menu.html">Comidas</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/reserve/reserve.html">Reservas</a>
+        </li>
+      </ul>
+
+      <!-- Carrito de compras -->
+       <ul class="navbar-nav">
+  <li class="nav-item">
+    <a class="nav-link" href="carrito.html">
+      <i class="fas fa-shopping-cart"></i> Carrito
+      <span id="cart-count" class="badge bg-danger">0</span>
+    </a>
+  </li>
+</ul>
+
+      <!-- Contenedor flexible para búsqueda y botones -->
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- Barra de búsqueda -->
+        <form class="d-flex" role="search">
+          <input class="form-control me-2" type="search" placeholder="Buscar..." aria-label="Buscar">
+          <button class="btn btn-outline-light" type="submit">Buscar</button>
+        </form>
+
+  <!-- Enlace actualizado a ruta absoluta para evitar resolución relativa inesperada -->
+  <a href="/login/login.html" class="btn btn-outline-light">Iniciar</a>
+      </div>
+    </div>
+  </div>  
+</nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="container my-5">
+    <div class="text-center mb-4">
+      <h1 class="fw-bold">Reservaciones</h1>
+      <p class="text-muted">Seleccione la fecha y horario para reservar su mesa.</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm p-4 mb-5">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label for="reserva-fecha" class="form-label fw-semibold">Fecha</label>
+          <input id="reserva-fecha" type="date" class="form-control">
         </div>
+        <div class="col-md-4">
+          <label for="reserva-inicio" class="form-label fw-semibold">Hora de llegada</label>
+          <select id="reserva-inicio" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+          <label for="reserva-fin" class="form-label fw-semibold">Hora de salida</label>
+          <select id="reserva-fin" class="form-select"></select>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <button id="btn-continuar" class="btn btn-warning text-dark px-5 fw-semibold">Continuar</button>
+      </div>
+      <small class="text-muted d-block mt-3 text-center">Los horarios se muestran en intervalos de 30 minutos.</small>
+    </div>
+
+    <!-- PLANO DE MESAS -->
+    <div class="text-center mb-4">
+      <h3 class="fw-bold mb-3">Plano del restaurante</h3>
+      <p class="text-muted">Seleccione una mesa disponible en el plano.</p>
+    </div>
 
     <div class="plano-container">
-        <img src="/Imajenes/reserveImg/planoRestaurante.png" alt="Plano del Restaurante" class="plano-img">
-        <!-- Mesas (posiciones definidas en CSS por data-mesa-id) -->
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_A" alt="Mesa 4 A">
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_B" alt="Mesa 4 B">
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_C" alt="Mesa 4 C">
-        <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_D" alt="Mesa 4 D">
-    </div>
+        <img src="/Imajenes/reserveImg/planoRestaurante.png" alt="Plano del restaurante" class="plano-img">
 
-    <!-- Diálogo de mesa (estructura HTML; estilos en CSS; lógica en JS) -->
-    <div id="mesa-dialog" class="dlg-overlay" aria-hidden="true">
-        <div class="dlg-card">
-            <h3 id="dlg-title" class="dlg-title">Mesa</h3>
-            <div id="dlg-body" class="dlg-body">
-                <p><strong>Estado:</strong> <span id="dlg-estado">-</span></p>
-                <p><strong>Capacidad:</strong> <span id="dlg-capacidad">-</span> sillas</p>
-                <p><strong>Sillas extra posibles:</strong> <span id="dlg-extras">-</span></p>
-            </div>
-            <div class="dlg-actions">
-                <button id="dlg-cancel" class="btn">Cerrar</button>
-                <button id="dlg-select" class="btn-primary">Seleccionar</button>
-            </div>
-        </div>
-    </div>
+  <!-- Mesas redondas para 4 (izquierda y centro) -->
+  <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_A" style="top:10%; left:22%;">
+  <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_B" style="top:10%; left:40%;">
+  <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_C" style="top:33%; left:22%;">
+  <img src="/Imajenes/reserveImg/MesaPara4.png" class="mesa-img" data-mesa-id="MESA_4_D" style="top:33%; left:40%;">
 
-                <script src="/reserve/reserve.js"></script>
+  <!-- Mesas rectangulares para 4 (lado derecho medio) -->
+  <img src="/Imajenes/reserveImg/MesaPara6.png" class="mesa-img" data-mesa-id="MESA_4_E" style="top:10%; left:65%;">
+  <img src="/Imajenes/reserveImg/MesaPara6.png" class="mesa-img" data-mesa-id="MESA_4_F" style="top:10%; left:82%;">
+  <img src="/Imajenes/reserveImg/MesaPara6.png" class="mesa-img" data-mesa-id="MESA_4_G" style="top:33%; left:65%;">
+  <img src="/Imajenes/reserveImg/MesaPara6.png" class="mesa-img" data-mesa-id="MESA_4_H" style="top:33%; left:82%;">
+
+  <!-- Mesas para 2 (zona izquierda inferior) -->
+  <img src="/Imajenes/reserveImg/MesaPara2.png" class="mesa-img" data-mesa-id="MESA_2_A" style="top:70%; left:5%;">
+  <img src="/Imajenes/reserveImg/MesaPara2.png" class="mesa-img" data-mesa-id="MESA_2_B" style="top:85%; left:5%;">
+  <img src="/Imajenes/reserveImg/MesaPara2.png" class="mesa-img" data-mesa-id="MESA_2_C" style="top:85%; left:18%;">
+
+  <!-- Barra en L (parte inferior central) -->
+  <img src="/Imajenes/reserveImg/MesaPara6.png" class="mesa-img" data-mesa-id="BARRA" style="top:70%; left:40%; width:150px;">
+
+  <!-- Mesa grande de 8 (abajo derecha) -->
+  <img src="/Imajenes/reserveImg/Mesapara8.png" class="mesa-img" data-mesa-id="MESA_8_A" style="top:80%; left:75%;">
+</div>
+
+
+<!-- Diálogo -->
+<div id="mesa-dialog" class="dlg-overlay">
+  <div class="dlg-card">
+    <h3 id="dlg-title" class="dlg-title"></h3>
+    <div class="dlg-body">
+      <p><strong>Estado:</strong> <span id="dlg-estado">-</span></p>
+      <p><strong>Capacidad:</strong> <span id="dlg-capacidad">-</span> personas</p>
+      <p><strong>Extras permitidos:</strong> <span id="dlg-extras">-</span></p>
+    </div>
+    <div class="dlg-actions">
+      <button id="dlg-cancel" class="btn">Cancelar</button>
+      <button id="dlg-select" class="btn-primary">Seleccionar</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/reserve/reserve.js"></script>
+
 </body>
+  <!-- FOOTER -->
+  <footer class="bg-dark text-white pt-4 pb-2 mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <h5>MiRestaurante</h5>
+          <p>© 2025 MiRestaurante. Todos los derechos reservados.</p>
+        </div>
+        <div class="col-md-3 mb-3">
+          <h6>Información</h6>
+          <ul class="list-unstyled">
+            <li><a href="/quienes-somos.html" class="text-white text-decoration-none">Quiénes somos</a></li>
+            <li><a href="/vision.html" class="text-white text-decoration-none">Visión</a></li>
+            <li><a href="/mision.html" class="text-white text-decoration-none">Misión</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 mb-3">
+          <h6>Síguenos</h6>
+          <a href="https://facebook.com" target="_blank" class="text-white me-3"><i class="fab fa-facebook fa-lg"></i></a>
+          <a href="https://instagram.com" target="_blank" class="text-white me-3"><i class="fab fa-instagram fa-lg"></i></a>
+          <a href="https://tiktok.com" target="_blank" class="text-white"><i class="fab fa-tiktok fa-lg"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
 </html>
