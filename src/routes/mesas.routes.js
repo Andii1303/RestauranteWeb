@@ -68,15 +68,30 @@ router.get('/api/mesas/availability', async (req, res) => {
     if (!fecha || !inicio || !fin) return res.status(400).json({ ok:false, message:'fecha, inicio y fin requeridos' });
     const start = `${fecha} ${inicio}:00`;
     const end = `${fecha} ${fin}:00`;
+    // Si el rango es inválido (inicio >= fin), responder vacío sin error
+    if (inicio >= fin) {
+      return res.json({ ok:true, unavailable_ids: [], unavailable_nombres: [] });
+    }
     // Reservas activas que solapan: NOT (fin <= start OR inicio >= end)
-    const [rows] = await pool.query(
-      `SELECT r.id AS reserva_id, mm.mesas_csv
-       FROM reservas r
-       JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
-       WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
-         AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
-      , [start, end]
-    );
+    let rows;
+    try {
+      [rows] = await pool.query(
+        `SELECT r.id AS reserva_id, mm.mesas_csv
+         FROM reservas r
+         JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+         WHERE r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+           AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
+        , [start, end]
+      );
+    } catch (err) {
+      // Si faltan columnas (reservas antiguas), fallar suave: sin conflictos
+      if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column/i.test(err?.message || '')) {
+        console.warn('Availability: columnas de reservas no encontradas; devolviendo lista vacía');
+        rows = [];
+      } else {
+        throw err;
+      }
+    }
     const idSet = new Set();
     for (const r of rows) {
       String(r.mesas_csv || '').split(',').map(s=>s.trim()).filter(Boolean).forEach(x => idSet.add(Number(x)));
@@ -109,13 +124,26 @@ router.get('/api/mesas/:nombre/details', async (req, res) => {
     if (fecha && inicio && fin) {
       const start = `${fecha} ${inicio}:00`;
       const end = `${fecha} ${fin}:00`;
-      const [conf] = await pool.query(
-        `SELECT mm.mesas_csv
-         FROM reservas r JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
-         WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
-           AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
-        , [start, end]
-      );
+      if (inicio >= fin) {
+        // Rango inválido: consideramos disponible para no romper UI
+        return res.json({ ok:true, nombre: mesa.nombre, capacidad: mesa.capacidad, activa: !!mesa.activa, disponible: true, extras_max: 2 });
+      }
+      let conf;
+      try {
+        [conf] = await pool.query(
+          `SELECT mm.mesas_csv
+           FROM reservas r JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+           WHERE r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+             AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
+          , [start, end]
+        );
+      } catch (err) {
+        if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column/i.test(err?.message || '')) {
+          console.warn('Mesa details: columnas de reservas no encontradas; asumiendo disponible');
+          return res.json({ ok:true, nombre: mesa.nombre, capacidad: mesa.capacidad, activa: !!mesa.activa, disponible: true, extras_max: 2 });
+        }
+        throw err;
+      }
       const conflictSet = new Set();
       for (const c of conf) {
         String(c.mesas_csv||'').split(',').map(s=>Number(s.trim())).filter(Boolean).forEach(x => conflictSet.add(x));
@@ -150,7 +178,7 @@ router.get('/api/mesa-details', async (req, res) => {
       const [conf] = await pool.query(
         `SELECT mm.mesas_csv
          FROM reservas r JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
-         WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+         WHERE r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
            AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
         , [start, end]
       );

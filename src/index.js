@@ -148,6 +148,18 @@ app.get('/db/tables', async (req, res) => {
   }
 });
 
+// Describir columnas de una tabla (debug)
+app.get('/db/describe', async (req, res) => {
+  try {
+    const table = String(req.query?.table || '').trim();
+    if (!table) return res.status(400).json({ error: 'table requerido' });
+    const [rows] = await pool.query(`DESCRIBE \`${table}\``);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Debug: listar rutas registradas (no exponer en prod)
 app.get('/debug/routes', (req, res) => {
   const routes = [];

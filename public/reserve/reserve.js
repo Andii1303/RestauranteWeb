@@ -37,6 +37,17 @@ function populateTimeSelects() {
 	const ev = fmt(end);
 	if (slots.includes(sv)) inicioSel.value = sv;
 	if (slots.includes(ev)) finSel.value = ev;
+
+		// Asegurar que fin > inicio siempre (si el inicio no cae en slots, ambos podrían quedar en 08:00)
+		const iVal = inicioSel.value || slots[0];
+		let iIdx = slots.indexOf(iVal);
+		if (iIdx < 0) iIdx = 0;
+		let fIdx = Math.max(iIdx + 1, 1);
+		if (fIdx >= slots.length) fIdx = slots.length - 1;
+		if (!finSel.value || finSel.value <= iVal) {
+			inicioSel.value = slots[iIdx];
+			finSel.value = slots[fIdx];
+		}
 }
 
 async function ensureDefaultMesas() {
@@ -79,6 +90,15 @@ document.addEventListener('DOMContentLoaded', () => {
 		const inicio = document.getElementById('reserva-inicio')?.value;
 		const fin = document.getElementById('reserva-fin')?.value;
 		if (!fecha || !inicio || !fin) return;
+		// Evitar llamadas con rango inválido
+		if (inicio >= fin) {
+			// Limpiar estados de "no disponible" si quedaron marcados
+			document.querySelectorAll('.mesa-img').forEach(el => {
+				el.classList.remove('mesa-disabled');
+				el.title = '';
+			});
+			return;
+		}
 		try {
 			const url = `/api/mesas/availability?fecha=${encodeURIComponent(fecha)}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`;
 			const r = await fetch(url);

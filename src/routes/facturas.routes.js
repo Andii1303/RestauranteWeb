@@ -43,14 +43,24 @@ router.post('/api/facturas/draft-from-mesa', async (req, res) => {
     const reservaInicio = (req.body?.reserva_inicio || '').trim();
     const reservaFin = (req.body?.reserva_fin || '').trim();
     if (reservaInicio && reservaFin) {
-      const [conflicts] = await pool.query(
-        `SELECT r.id, mm.mesas_csv
-         FROM reservas r
-         JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
-         WHERE r.activa = 1 AND r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
-           AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
-        , [reservaInicio, reservaFin]
-      );
+      let conflicts;
+      try {
+        [conflicts] = await pool.query(
+          `SELECT r.id, mm.mesas_csv
+           FROM reservas r
+           JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+           WHERE r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+             AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)`
+          , [reservaInicio, reservaFin]
+        );
+      } catch (err) {
+        if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column/i.test(err?.message || '')) {
+          console.warn('Draft conflict check: columnas de reservas no encontradas; asumiendo sin conflictos');
+          conflicts = [];
+        } else {
+          throw err;
+        }
+      }
       // Chequear intersección de mesas
       const conflictSet = new Set();
       for (const c of conflicts) {

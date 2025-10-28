@@ -70,6 +70,16 @@ export async function ensureReservationSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+  // Migración defensiva de facturas: columnas posibles faltantes (usando helpers)
+  try { await ensureColumn('facturas', 'mesas_mix_id', 'mesas_mix_id INT NULL'); } catch {}
+  try { await ensureColumn('facturas', 'reserva_hora', 'reserva_hora DATETIME NULL'); } catch {}
+  try { await ensureColumn('facturas', 'total', 'total DECIMAL(10,2) NOT NULL DEFAULT 0'); } catch {}
+  try { await ensureColumn('facturas', 'cliente_nombre', 'cliente_nombre VARCHAR(150) NULL'); } catch {}
+  try { await ensureColumn('facturas', 'cliente_dni', 'cliente_dni VARCHAR(50) NULL'); } catch {}
+  try { await ensureColumn('facturas', 'cliente_telefono', 'cliente_telefono VARCHAR(50) NULL'); } catch {}
+  try { await ensureColumn('facturas', 'cliente_email', 'cliente_email VARCHAR(150) NULL'); } catch {}
+  try { await ensureIndex('facturas', 'idx_facturas_mesas_mix_id', '(mesas_mix_id)'); } catch {}
+
   // Detalles de factura (carrito)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS detalles_factura (
@@ -105,4 +115,37 @@ export async function ensureReservationSchema() {
       INDEX (reserva_fin)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+
+  // Helpers de migración compatibles con versiones que no soportan IF NOT EXISTS
+  async function ensureColumn(table, column, definition) {
+    const [cols] = await pool.query(
+      `SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
+      [DB_NAME, table, column]
+    );
+    if (!cols.length) {
+      await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN ${definition}`);
+    }
+  }
+  async function ensureIndex(table, indexName, columnsExpr) {
+    const [idx] = await pool.query(
+      `SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1`,
+      [DB_NAME, table, indexName]
+    );
+    if (!idx.length) {
+      await pool.query(`CREATE INDEX \`${indexName}\` ON \`${table}\` ${columnsExpr}`);
+    }
+  }
+
+  // Migración defensiva: agregar columnas e índices si faltan (BDs antiguas)
+  try { await ensureColumn('reservas', 'mesas_mix_id', 'mesas_mix_id INT NULL'); } catch {}
+  try { await ensureColumn('reservas', 'factura_id', 'factura_id INT NULL'); } catch {}
+  try { await ensureColumn('reservas', 'created_by', 'created_by VARCHAR(100) NULL'); } catch {}
+  try { await ensureColumn('reservas', 'activa', 'activa TINYINT(1) NOT NULL DEFAULT 1'); } catch {}
+  try { await ensureColumn('reservas', 'reserva_inicio', 'reserva_inicio DATETIME NULL'); } catch {}
+  try { await ensureColumn('reservas', 'reserva_fin', 'reserva_fin DATETIME NULL'); } catch {}
+  try { await ensureColumn('reservas', 'status', "status ENUM('BORRADOR','CONFIRMADA','CANCELADA') NOT NULL DEFAULT 'BORRADOR'"); } catch {}
+  // Índices
+  try { await ensureIndex('reservas', 'idx_reservas_inicio', '(reserva_inicio)'); } catch {}
+  try { await ensureIndex('reservas', 'idx_reservas_fin', '(reserva_fin)'); } catch {}
+  try { await ensureIndex('reservas', 'idx_reservas_activa_inicio_fin', '(activa, reserva_inicio, reserva_fin)'); } catch {}
 }
