@@ -64,7 +64,7 @@ async function ensureDefaultMesas() {
 		await fetch('/api/mesas/ensure-defaults', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ mesas })
+			body: JSON.stringify({ mesas, deleteMissing: true })
 		});
 	} catch (e) {
 		console.warn('No se pudieron asegurar mesas por defecto', e);

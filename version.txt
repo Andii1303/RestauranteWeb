@@ -74,3 +74,21 @@ la experiencia de usuario.
 	- `public/cliente/pago-confirmacion.html`
 	- `public/admin/Scripusuarios.js`
 - Todos los flujos apuntan ahora a `/payments/*` y `usuarios-admin.js` en Admin.
+
+# version 1.4.0 (28/10/25)
+- Implementacion formal de interfaz mejorada para reserva y flujo completo de reserva
+. si uso de strip enpagos
+-errores puntuales de 500 en busca de id en el servidor solucionados
+
+
+## Versión 1.5.0 (28/10/2025)
+- Seguridad y control de acceso en vistas estáticas protegidas:
+	- Rutas protegidas por rol con 404 si no autenticado o rol incorrecto: `/admin` (ADMIN), `/kitchen` (COCINERO), `/waiter` (MESERO), `/delivey` (MESERO).
+	- Cabeceras de no caché en secciones protegidas para evitar que el navegador muestre pantallas al usar Atrás/Adelante tras cerrar sesión.
+	- Reordenamiento del servido estático para aplicar primero los guards y después el resto de `public/`.
+- Logout: redirección a login y bloqueo de previsualización posterior por caché.
+- Admin navegación:
+	- Enlace a `formUser.html` usa `window.location.replace(...)` para no dejar rastro en el historial.
+	- `formUser.html` incluye guard de historial (popstate) para evitar volver a `Admin.html#` con la flecha Atrás.
+
+

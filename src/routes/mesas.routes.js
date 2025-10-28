@@ -17,22 +17,55 @@ router.get('/api/mesas', async (_req, res) => {
 // body: { mesas: [{ nombre: 'MESA_4_A', capacidad: 4 }, ...] }
 router.post('/api/mesas/ensure-defaults', async (req, res) => {
   const mesas = Array.isArray(req.body?.mesas) ? req.body.mesas : [];
+  const deactivateMissing = !!req.body?.deactivateMissing;
+  const deleteMissing = !!req.body?.deleteMissing;
   if (!mesas.length) return res.status(400).json({ ok: false, message: 'mesas requerido' });
-  const created = [];
   try {
+    // Traer todas las mesas existentes
+    const [existAll] = await pool.query('SELECT id, nombre, capacidad, activa FROM mesas');
+    const byName = new Map(existAll.map(m => [m.nombre, m]));
+    const keepIds = new Set();
+    const upserts = [];
+
+    // UPSERT por nombre y asegurar activa=1
     for (const m of mesas) {
       const nombre = String(m?.nombre || '').trim();
       if (!nombre) continue;
       const cap = Number(m?.capacidad) || 4;
-      const [rows] = await pool.query('SELECT id FROM mesas WHERE nombre = ? LIMIT 1', [nombre]);
-      if (rows.length) {
-        created.push({ nombre, id: rows[0].id, capacidad: cap, existed: true });
+      const exist = byName.get(nombre);
+      if (exist) {
+        keepIds.add(exist.id);
+        // Actualizar capacidad y activar si difiere
+        if (exist.capacidad !== cap || !exist.activa) {
+          await pool.query('UPDATE mesas SET capacidad = ?, activa = 1 WHERE id = ?', [cap, exist.id]);
+          upserts.push({ nombre, id: exist.id, capacidad: cap, updated: true });
+        } else {
+          upserts.push({ nombre, id: exist.id, capacidad: cap, updated: false });
+        }
       } else {
         const [r] = await pool.query('INSERT INTO mesas (nombre, capacidad, activa) VALUES (?, ?, 1)', [nombre, cap]);
-        created.push({ nombre, id: r.insertId, capacidad: cap, existed: false });
+        keepIds.add(r.insertId);
+        upserts.push({ nombre, id: r.insertId, capacidad: cap, created: true });
       }
     }
-    res.json({ ok: true, items: created });
+
+    // Manejo de faltantes
+    let removed = 0, deactivated = 0;
+    if (deleteMissing || deactivateMissing) {
+      const missing = existAll.filter(m => !keepIds.has(m.id));
+      if (missing.length) {
+        const ids = missing.map(m => m.id);
+        if (deleteMissing) {
+          await pool.query(`DELETE FROM mesas WHERE id IN (${ids.map(()=>'?').join(',')})`, ids);
+          removed = ids.length;
+        } else if (deactivateMissing) {
+          await pool.query(`UPDATE mesas SET activa = 0 WHERE id IN (${ids.map(()=>'?').join(',')})`, ids);
+          deactivated = ids.length;
+        }
+      }
+    }
+
+    res.json({ ok: true, items: upserts, removed, deactivated });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }

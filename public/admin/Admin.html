@@ -15,7 +15,8 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="/cliente/index.html">MiRestaurante</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" 
+        aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarContenido">
@@ -44,7 +45,7 @@
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('menu')">Menú</a></li>
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('ingredientes')">Ingredientes</a></li>
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('ingresoIngredientes')">Ingreso de ingredientes</a></li>
-        <li><a href="../admin/formUser.html" class="nav-link text-white" onclick="mostrarSeccion('usuarios')">usuarios</a></li>
+  <li><a href="/admin/formUser.html" class="nav-link text-white" onclick="event.preventDefault(); window.location.replace('/admin/formUser.html');">usuarios</a></li>
       </ul>
       <h6>Reportes</h6>
       <ul class="nav flex-column mb-3">
@@ -186,9 +187,9 @@
       </div>
 
       <!-- Sección Ingreso de Ingredientes (aparte) -->
-  <div id="ingresoIngredientes" class="seccion d-none">
+      <div id="ingresoIngredientes" class="seccion d-none">
         <h2 class="mb-4">Ingreso de Ingredientes</h2>
-  <div class="border rounded p-3 mb-4 bg-section">
+        <div class="border rounded p-3 mb-4 bg-section">
           <div class="row g-2 align-items-end">
             <div class="col-md-7">
               <label class="form-label" for="batch-ingresoIngrediente">Ingrediente</label>
@@ -223,7 +224,7 @@
       </div>
 
       <!-- Sección Usuarios -->
-  <div id="usuarios" class="seccion d-none">
+      <!--<div id="usuarios" class="seccion d-none">
         <h2 class="mb-4">Gestión de Usuarios</h2>
         <form id="formUsuario" class="row g-3 mb-4">
           <input type="hidden" id="usuario" />
@@ -270,6 +271,9 @@
           </table>
         </div>
       </div>
+    -->
+
+
     </div>
   </div>
 

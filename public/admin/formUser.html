@@ -49,6 +49,16 @@
     </form>
 
     <script>
+        // Evitar volver a Admin.html con el botón atrás (neutraliza historial reciente)
+        (function preventBackToAdmin(){
+            // Reemplaza la entrada previa para que 'Atrás' no regrese a Admin.html
+            try { history.replaceState(null, document.title, location.href); } catch {}
+            // Si el usuario presiona atrás, reinyectar el estado actual (permite salir con enlaces explícitos)
+            window.addEventListener('popstate', function(){
+                try { history.pushState(null, document.title, location.href); } catch {}
+            });
+        })();
+
         async function fetchRoles() {
             const r = await fetch('/roles', { credentials: 'include'});
             if(!r.ok) throw new Error('No se pudieron cargar roles');

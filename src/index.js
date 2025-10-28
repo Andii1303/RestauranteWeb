@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { ping, pool, ensureReservationSchema } from './db.js';
 import authRouter from './routes/auth.routes.js';
 import { verifyToken, requireRole } from './middleware/auth.js';
@@ -88,9 +89,7 @@ app.use(mesasRouter);
 console.log('Rutas de ingredientes y menú montadas');
 
 
-// Servir toda la carpeta public primero (para favicon, assets compartidos, etc.)
-app.use(express.static(path.join(__dirname, '../public')));
-// Alias específicos
+// Alias específicos públicos (cliente no requiere login)
 app.use('/client', express.static(path.join(__dirname, '../public/cliente')));
 
 // Normalizador de rutas de login: cualquier variante termina en /login/login.html
@@ -101,7 +100,48 @@ app.use((req, res, next) => {
   next();
 });
 app.use('/login', express.static(path.join(__dirname, '../public/login')));
-app.use('/admin', verifyToken, requireRole('ADMIN'), express.static(path.join(__dirname, '../public/admin')));
+
+// Helper: 404 si no autenticado o rol incorrecto (para secciones estáticas protegidas)
+const notFoundPath = path.join(__dirname, '../public/404.html');
+const guardStatic = (role) => (req, res, next) => {
+  try {
+    const token = req.cookies?.token;
+    if (!token) return res.status(404).sendFile(notFoundPath, err => { if (err) res.status(404).end(); });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret_change_me');
+    if (!decoded || decoded.role !== role) {
+      return res.status(404).sendFile(notFoundPath, err => { if (err) res.status(404).end(); });
+    }
+    req.user = decoded;
+    return next();
+  } catch {
+    return res.status(404).sendFile(notFoundPath, err => { if (err) res.status(404).end(); });
+  }
+};
+
+// No-cache para secciones protegidas (evitar back/forward muestren caché)
+const noStore = (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+};
+const staticNoStoreOpts = {
+  etag: false,
+  lastModified: false,
+  cacheControl: false,
+  maxAge: 0,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  },
+};
+
+// Secciones protegidas: ADMIN, COCINERO, MESERO, (repartidor asumido MESERO)
+app.use('/admin', guardStatic('ADMIN'), noStore, express.static(path.join(__dirname, '../public/admin'), staticNoStoreOpts));
+app.use('/kitchen', guardStatic('COCINERO'), noStore, express.static(path.join(__dirname, '../public/kitchen'), staticNoStoreOpts));
+app.use('/waiter', guardStatic('MESERO'), noStore, express.static(path.join(__dirname, '../public/waiter'), staticNoStoreOpts));
+app.use('/delivey', guardStatic('MESERO'), noStore, express.static(path.join(__dirname, '../public/delivey'), staticNoStoreOpts));
 
 // Favicon explícito (si existe public/favicon.ico)
 app.get('/favicon.ico', (req, res) => {
@@ -109,6 +149,9 @@ app.get('/favicon.ico', (req, res) => {
     if (err) res.status(204).end(); // silencioso si no existe
   });
 });
+
+// Servir carpeta public para el resto (después de proteger secciones)
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Redirección raíz directamente a menú cliente
 app.get('/', (req, res) => {
