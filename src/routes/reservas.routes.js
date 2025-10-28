@@ -167,3 +167,54 @@ router.get('/api/reservas/draft/:mesaId', async (req, res) => {
 });
 
 export default router;
+ 
+// Listar reservas por día/franja
+// GET /api/reservas/for-day?fecha=YYYY-MM-DD&inicio=HH:MM&fin=HH:MM
+router.get('/api/reservas/for-day', async (req, res) => {
+  try {
+    const fecha = String(req.query?.fecha || '').trim();
+    const inicio = String(req.query?.inicio || '00:00').trim();
+    const fin = String(req.query?.fin || '23:59').trim();
+    if (!fecha) return res.status(400).json({ ok:false, message:'fecha requerida' });
+    if (inicio >= fin) return res.json({ ok:true, items: [] });
+    const start = `${fecha} ${inicio}:00`;
+    const end = `${fecha} ${fin}:00`;
+
+    let rows;
+    try {
+      [rows] = await pool.query(
+        `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
+                mm.mesas_csv, f.cliente_nombre
+         FROM reservas r
+         LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+         LEFT JOIN facturas f ON f.id = r.factura_id
+         WHERE r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+           AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)
+         ORDER BY r.reserva_inicio ASC`
+        , [start, end]
+      );
+    } catch (err) {
+      if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column/i.test(err?.message || '')) {
+        // Esquema antiguo: sin columnas de horarios -> no hay base para listar por franja
+        return res.json({ ok:true, items: [] });
+      }
+      throw err;
+    }
+
+    // Enriquecer con nombres de mesas a partir de CSV
+    const items = rows.map(r => {
+      const mesas = String(r.mesas_csv||'').split(',').map(s=>s.trim()).filter(Boolean);
+      return {
+        id: r.id,
+        inicio: r.reserva_inicio,
+        fin: r.reserva_fin,
+        status: r.status,
+        cliente: r.cliente_nombre || null,
+        mesas,
+      };
+    });
+    res.json({ ok:true, items });
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});

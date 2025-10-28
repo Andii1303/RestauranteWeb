@@ -91,4 +91,8 @@ la experiencia de usuario.
 	- Enlace a `formUser.html` usa `window.location.replace(...)` para no dejar rastro en el historial.
 	- `formUser.html` incluye guard de historial (popstate) para evitar volver a `Admin.html#` con la flecha Atrás.
 
-
+### Versión 1.6.0 (28/10/2025)
+- Panel de mesero: 
+	- listado de reservas del día con filtros de fecha/hora y tarjetas.
+	- Endpoint /api/reservas/for-day para obtener reservas filtradas.
+	- Modularización de código: HTML, JS y CSS separados para el mesero.

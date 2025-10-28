@@ -1,0 +1,4 @@
+/* Estilos mínimos para tarjetas de reservas */
+.w-card { border: 1px solid rgba(0,0,0,.08); }
+.w-card .card-title { font-weight: 600; }
+.sidebar-fixed { width: 260px; min-height: 100vh; }

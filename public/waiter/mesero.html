@@ -12,19 +12,17 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
   <a class="navbar-brand" href="/cliente/index.html">MiRestaurante</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" 
+      aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarContenido">
+    <!--<div class="collapse navbar-collapse" id="navbarContenido">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
           <a class="nav-link active" href="/cliente/index.html">Inicio</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="Admin.html">Administrador</a>
-        </li>
-      </ul>
+      </ul>-->
 
       <!-- Contenedor flexible para búsqueda y botones -->
       <div class="d-flex flex-wrap align-items-center gap-2">
@@ -46,6 +44,7 @@
       <h4 class="mb-4">Panel del Mesero</h4>
       <h6>Administrar</h6>
       <ul class="nav flex-column mb-3">
+        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('reserva')">Reservas</a></li>
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('mesas')">Mesas</a></li>
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('agregar')">Agregar Alimentos</a></li>
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('ver')">Ver</a></li>
@@ -55,6 +54,25 @@
 
     <!-- Secciones -->
     <div class="flex-grow-1 p-4">
+      <!-- Reservas del día -->
+      <div id="reserva" class="seccion d-none">
+        <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+          <div>
+            <label class="form-label mb-1" for="w-fecha">Fecha</label>
+            <input id="w-fecha" type="date" class="form-control" />
+          </div>
+          <div>
+            <label class="form-label mb-1" for="w-inicio">Inicio</label>
+            <select id="w-inicio" class="form-select"></select>
+          </div>
+          <div>
+            <label class="form-label mb-1" for="w-fin">Fin</label>
+            <select id="w-fin" class="form-select"></select>
+          </div>
+          <button id="w-filtrar" class="btn btn-primary">Filtrar</button>
+        </div>
+        <div id="w-reservas" class="row g-3"></div>
+      </div>
       <!-- Mesas -->
       <div id="mesas" class="seccion">
         <h3>Estado de las Mesas Ocupadas</h3>
@@ -99,6 +117,7 @@
   </div>
 
   <script src="mesero.js"></script>
+  <link rel="stylesheet" href="/waiter/mesero.css">
 </body>
 <footer class="bg-dark text-white pt-4 pb-2 mt-5">
   <div class="container">

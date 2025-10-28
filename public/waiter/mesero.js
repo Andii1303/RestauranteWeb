@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById(id).classList.remove('d-none');
     if (id === 'ver') renderizarVistaMesas();
     if (id === 'agregar') renderizarAlimentos();
+    if (id === 'reserva') cargarReservas();
   };
 
   // Renderizar mesas ocupadas
@@ -212,6 +213,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Inicializar
   renderizarMesas();
+
+  // --- Reservas del día ---
+  function slots() {
+    const a=[]; for (let h=0; h<=23; h++){ for (let m of [0,30]) a.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')); }
+    return a;
+  }
+  function setUpFiltros() {
+    const f = document.getElementById('w-fecha');
+    const i = document.getElementById('w-inicio');
+    const fn = document.getElementById('w-fin');
+    if (!f || !i || !fn) return;
+    const today = new Date();
+    const y = today.getFullYear(), m = String(today.getMonth()+1).padStart(2,'0'), d=String(today.getDate()).padStart(2,'0');
+    f.value = `${y}-${m}-${d}`;
+    const s = slots();
+    i.innerHTML = s.map(x=>`<option>${x}</option>`).join('');
+    fn.innerHTML = s.map(x=>`<option>${x}</option>`).join('');
+    i.value = '08:00'; fn.value = '23:00';
+  }
+  async function cargarReservas() {
+    setUpFiltros();
+    await fetchReservas();
+  }
+  async function fetchReservas(){
+    const cont = document.getElementById('w-reservas'); if (!cont) return;
+    const fecha = document.getElementById('w-fecha')?.value;
+    const inicio = document.getElementById('w-inicio')?.value;
+    const fin = document.getElementById('w-fin')?.value;
+    cont.textContent='';
+    if (!fecha || !inicio || !fin || inicio>=fin) return;
+    try{
+      const r = await fetch(`/api/reservas/for-day?fecha=${encodeURIComponent(fecha)}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`, { credentials:'include' });
+      const j = await r.json();
+      (j.items||[]).forEach(it=>{
+        const col = h('div',{className:'col-md-4'});
+        const card = h('div',{className:'card shadow-sm w-card'});
+        const body = h('div',{className:'card-body'});
+        body.appendChild(h('h6',{className:'card-title', text:`Reserva #${it.id}`}));
+        body.appendChild(h('p',{className:'card-text', text:`Cliente: ${it.cliente||'—'}`}));
+        body.appendChild(h('p',{className:'card-text', text:`Mesas: ${it.mesas.join(', ')||'—'}`}));
+        body.appendChild(h('p',{className:'card-text', text:`${(it.inicio||'').replace('T',' ')} a ${(it.fin||'').replace('T',' ')}`}));
+        card.appendChild(body); col.appendChild(card); cont.appendChild(col);
+      });
+    }catch(e){
+      const warn = document.createElement('div'); warn.className='alert alert-warning'; warn.textContent='No se pudieron cargar reservas'; cont.appendChild(warn);
+    }
+  }
+  document.getElementById('w-filtrar')?.addEventListener('click', fetchReservas);
 });
 
 // Renderizar órdenes
