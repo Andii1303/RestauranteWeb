@@ -1,6 +1,9 @@
 /* === General === */
 body {
-  background-color: azure;
+  background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
+  background-image: url("https://media.istockphoto.com/id/1149011243/es/vector/vector-horizontal-ilustraci%C3%B3n-de-un-fondo-gris-azulado-claro-y-con-textura-grunge.jpg?s=612x612&w=0&k=20&c=y-Z3vFjTdTMbzOBbOWEnzkr_m-2MuZXFxCG62DppP0I=");
+  background-repeat: repeat;
+  font-family: 'Roboto', sans-serif;
   font-family: 'Roboto', sans-serif;
 }
 
@@ -60,7 +63,7 @@ h1 {
 
 /* === Carrusel === */
 #carouselCentral {
-  max-width: 850px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -85,7 +88,7 @@ h1 {
 
 /* === Cards === */
 .card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.6s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
