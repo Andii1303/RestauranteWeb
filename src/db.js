@@ -9,8 +9,12 @@ const {
   DB_USER = "appuser",
   DB_PASSWORD = "App12345!",
   DB_NAME = "restauranteDB",
+  DB_POOL_SIZE = "10",
+  DB_SSL = "false",
   SKIP_DB = "false",
 } = process.env;
+
+const sslOption = DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined;
 
 export const pool = SKIP_DB === 'true'
   ? null
@@ -21,8 +25,9 @@ export const pool = SKIP_DB === 'true'
       password: DB_PASSWORD,
       database: DB_NAME,
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit: Number(DB_POOL_SIZE || 10),
       queueLimit: 0,
+      ssl: sslOption,
     });
 
 // Helper opcional para ping
@@ -38,6 +43,59 @@ export async function ping() {
 // Solo crea tablas si no existen; NO altera estructuras existentes.
 export async function ensureReservationSchema() {
   if (!pool) return; // DB disabled
+  // Catálogo base para menú e ingredientes (idempotente)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS units (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      code VARCHAR(32) NOT NULL UNIQUE,
+      name VARCHAR(64) NOT NULL,
+      decimals TINYINT NOT NULL DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ingredients (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(120) NOT NULL UNIQUE,
+      unit_id INT NOT NULL,
+      stock_qty DECIMAL(12,3) NOT NULL DEFAULT 0,
+      min_qty DECIMAL(12,3) NOT NULL DEFAULT 0,
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_ingredients_unit FOREIGN KEY (unit_id) REFERENCES units(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS menu_items (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      type ENUM('PLATO','PRODUCTO') NOT NULL,
+      name VARCHAR(160) NOT NULL,
+      description VARCHAR(500),
+      price DECIMAL(12,2) NOT NULL DEFAULT 0,
+      photo_url VARCHAR(500),
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_menu_items_name_type (name, type)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS recipe_ingredients (
+      menu_item_id INT NOT NULL,
+      ingredient_id INT NOT NULL,
+      qty DECIMAL(12,3) NOT NULL,
+      PRIMARY KEY (menu_item_id, ingredient_id),
+      CONSTRAINT fk_recipe_item FOREIGN KEY (menu_item_id) REFERENCES menu_items(id) ON DELETE CASCADE,
+      CONSTRAINT fk_recipe_ing FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  // Seeds mínimos para units
+  try {
+    await pool.query(`INSERT IGNORE INTO units (id, code, name, decimals) VALUES
+      (1,'u','Unidad',0), (2,'g','Gramos',3), (3,'ml','Mililitros',3)`);
+  } catch {}
   // Tabla de mesas
   await pool.query(`
     CREATE TABLE IF NOT EXISTS mesas (

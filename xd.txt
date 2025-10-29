@@ -1,1 +1,9 @@
 Nombre (posible): mesaFacil / easyTable 
+
+
+## railway
+mysql.railway.internal
+3306
+root
+eRzUITBONcXYSYDiPVdWsEqMPjYGXfQx
+railway
