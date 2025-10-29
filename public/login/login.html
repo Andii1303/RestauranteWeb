@@ -14,7 +14,7 @@
 </head>
 <body>
   
-  <!-- Navbar -->
+ <!--navBar-->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-3">
   <div class="container-fluid">
     <!-- Marca -->
@@ -64,12 +64,10 @@
 
       <!-- Búsqueda y botón de inicio -->
       <div class="d-flex flex-wrap align-items-center gap-3">
-        <!-- Barra de búsqueda -->
-        <form class="d-flex" role="search">
-          <input class="form-control rounded-pill px-3" type="search" placeholder="Buscar..." aria-label="Buscar">
-          <button class="btn btn-outline-light rounded-pill ms-2" type="submit">
-            <i class="bi bi-search"></i>
-          </button>
+        <!-- Barra de búsqueda con lupa integrada -->
+        <form class="position-relative" role="search">
+          <input class="form-control rounded-pill ps-5" type="search" placeholder="Buscar" aria-label="Buscar">
+          <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
         </form>
 
         <!-- Botón de inicio de sesión -->

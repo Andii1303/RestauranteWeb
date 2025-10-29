@@ -1,11 +1,31 @@
+/* === General === */
 body {
-  background-color: azure;
-  font-family: 'roboto', sans-serif;
-  background-color: azure;
+  background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
+  background-image: url("https://media.istockphoto.com/id/1149011243/es/vector/vector-horizontal-ilustraci%C3%B3n-de-un-fondo-gris-azulado-claro-y-con-textura-grunge.jpg?s=612x612&w=0&k=20&c=y-Z3vFjTdTMbzOBbOWEnzkr_m-2MuZXFxCG62DppP0I=");
+  background-repeat: repeat;
+  font-family: 'Roboto', sans-serif;
+  font-family: 'Roboto', sans-serif;
+}
+
+h1 {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* === Navbar === */
+.navbar {
+  padding-left: 2rem;
+  padding-right: 2rem;
+  background: linear-gradient(to right, #000000, #1c1c1c, #333333);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .navbar-brand {
   font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.navbar-brand span {
+  font-size: 1.25rem;
   letter-spacing: 1px;
 }
 
@@ -14,9 +34,22 @@ body {
 }
 
 .nav-link:hover {
-  color: #ffc107 !important; /* Amarillo Bootstrap */
+  color: #ffc107 !important;
 }
 
+/* Botón hamburguesa personalizado */
+.custom-toggler {
+  background-color: #ffc107;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.custom-toggler .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='black' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+/* === Botones === */
 .btn-amarillo {
   background-color: #ffc107;
   color: black;
@@ -27,118 +60,61 @@ body {
   background-color: #e0a800;
   color: black;
 }
-h1{
-  font-family: Arial, Helvetica, sans-serif
-}
-.menu_image_container{
-  width: 100%;
-  height: 95vh;
 
-}
-.menu_image_container>img{
-  width: 100%;
-  height: 100%;
-
+/* === Carrusel === */
+#carouselCentral {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-/* Botón hamburguesa amarillo con líneas negras */
-.custom-toggler {
-  background-color: #ffc107; /* Amarillo */
-  border: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem; /* Esquinas redondeadas */
-}
-
-/* Ícono de 3 líneas negras */
-.custom-toggler .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='black' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-}
-
-/* Utilidades y ajustes para index.html */
-.hero-img { height: 700px; width: 1200px; object-fit: cover; }
-.d-none { display: none !important; }
-.card-img-placeholder { height: 180px; background: #f1f3f5; }
-.card-desc { min-height: 3em; }
-.card-img-top-holder { min-height: 180px; }
-
-/* Sidebar fija común para paneles */
-.sidebar-fixed { width: 250px; min-height: 100vh; }
-
-/* Pago */
-.d-block { display: block !important; }
-.d-none { display: none !important; }
-.maxw-640 { max-width: 640px; }
-
-.navbar-brand span {
-  font-size: 1.25rem;
-  letter-spacing: 1px;
-  padding-left: 2rem;
-  padding-right: 2rem;
-  background: linear-gradient(to right, #000000, #1c1c1c, #333333);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-/* Estilo para ensanchar el navbar y aplicar degradado */
-
-/* Carrusel ocupa toda la altura visible */
 .carousel-img {
-  height: 100vh;
+  max-height: 450px;
+  width: 100%;
   object-fit: cover;
+  border-radius: 12px;
+   background-color: #f8f9fa; 
 }
 
-/* Texto con degradado */
-.text-gradient {
-  background: linear-gradient(to right, #ff8c00, #ffc107);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.carousel-inner {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Animación de entrada */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  padding: 10px;
 }
 
-.animate-fade-in {
-  animation: fadeInUp 0.8s ease-out both;
+/* === Cards === */
+.card {
+  transition: transform 0.6s ease, box-shadow 0.3s ease;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
-
-.animate-fade-in {
-  animation: fadeInUp 0.8s ease-out both;
-}
-
-.text-gradient {
-  background: linear-gradient(to right, #ff8c00, #ffc107);
-  background-clip: text;              /* Standard property */
-  -webkit-background-clip: text;      /* WebKit prefix for Chrome/Safari */
-  color: transparent;
-  -webkit-text-fill-color: transparent; /* Required for WebKit to render transparent text */
-}
-
 
 .card-img-top {
   height: 250px;
   object-fit: cover;
 }
 
-/* Animación de entrada */
+.card-img-placeholder {
+  height: 180px;
+  background: #f1f3f5;
+}
+
+.card-desc {
+  min-height: 3em;
+}
+
+.card-img-top-holder {
+  min-height: 180px;
+}
+
+/* === Animaciones === */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -154,5 +130,44 @@ h1{
   animation: fadeInUp 0.8s ease-out both;
 }
 
+/* === Texto degradado === */
+.text-gradient {
+  background: linear-gradient(to right, #ff8c00, #ffc107);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
 
+/* === Utilidades === */
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+.maxw-640 { max-width: 640px; }
 
+/* === Imagen de fondo para sección menú === */
+.menu_image_container {
+  width: 100%;
+  height: 95vh;
+}
+
+.menu_image_container > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* === Sidebar fija (si usas paneles) === */
+.sidebar-fixed {
+  width: 250px;
+  min-height: 100vh;
+}
+/* Estilo para la barra de búsqueda con ícono integrado */
+form[role="search"] {
+  width: 250px;
+}
+
+form[role="search"] .bi-search {
+  pointer-events: none;
+  font-size: 1rem;
+  color: #6c757d;
+}

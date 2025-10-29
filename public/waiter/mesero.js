@@ -310,9 +310,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const nuevos = input.split(',').map(s=>Number(s.trim())).filter(n=>Number.isFinite(n));
             if (!nuevos.length) return alert('No se especificaron mesas');
             const merged = Array.from(new Set([...actuales.map(Number).filter(Number.isFinite), ...nuevos]));
-            const resp = await fetch(`/api/reservas/${it.id}/mesas`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesas: merged })});
-            const jr = await resp.json();
-            if (!jr?.ok) return alert(jr?.message || 'No se pudo actualizar mesas');
+            let resp = await fetch(`/api/reservas/${it.id}/mesas`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesas: merged })});
+            if (!resp.ok && resp.status === 404 && it.factura_id) {
+              // Fallback por factura si la reserva no existe
+              resp = await fetch(`/api/facturas/${it.factura_id}/mesas`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesas: merged })});
+            }
+            const jr = await resp.json().catch(()=>({ ok:false }));
+            if (!resp.ok || !jr?.ok) return alert(jr?.message || 'No se pudo actualizar mesas');
             await fetchReservas();
           } catch (e) {
             alert('Error al actualizar mesas');
@@ -369,9 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch {}
         btnConfirm.addEventListener('click', async () => {
           try {
-            const r = await fetch(`/api/reservas/${it.id}/attendance`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ attended: true }) });
-            const jr = await r.json();
-            if (!jr?.ok) return alert(jr?.message || 'No se pudo confirmar asistencia');
+            let r = await fetch(`/api/reservas/${it.id}/attendance`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ attended: true }) });
+            if (!r.ok && r.status === 404 && it.factura_id) {
+              r = await fetch(`/api/reservas/by-factura/${it.factura_id}/attendance`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ attended: true }) });
+            }
+            const jr = await r.json().catch(()=>({ ok:false }));
+            if (!r.ok || !jr?.ok) return alert(jr?.message || 'No se pudo confirmar asistencia');
             await fetchReservas();
           } catch(e) {
             alert('Error al confirmar asistencia');
