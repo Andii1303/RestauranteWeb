@@ -218,3 +218,27 @@ router.get('/api/reservas/for-day', async (req, res) => {
     res.status(500).json({ ok:false, message: err.message });
   }
 });
+
+// Marcar asistencia del cliente a la reserva
+// PATCH /api/reservas/:id/attendance { attended: true|false }
+router.patch('/api/reservas/:id/attendance', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ ok:false, message:'id inválido' });
+    const attended = !!(req.body?.attended ?? true);
+
+    try {
+      await pool.query('UPDATE reservas SET asistencia_confirmada = ? WHERE id = ?', [attended ? 1 : 0, id]);
+      return res.json({ ok:true, id, asistencia_confirmada: attended ? 1 : 0 });
+    } catch (err) {
+      // Fallback si la columna no existe: usar status
+      if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column/i.test(err?.message || '')) {
+        await pool.query('UPDATE reservas SET status = ? WHERE id = ?', [attended ? 'CONFIRMADA' : 'BORRADOR', id]);
+        return res.json({ ok:true, id, status: attended ? 'CONFIRMADA' : 'BORRADOR' });
+      }
+      throw err;
+    }
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});

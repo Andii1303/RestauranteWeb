@@ -258,4 +258,51 @@ router.delete('/api/facturas/:id/detalles', async (req, res) => {
   }
 });
 
+// Cancelar y eliminar una factura (siempre que no esté pagada). También elimina la reserva vinculada y limpia mesas_mix si queda huérfana.
+router.delete('/api/facturas/:id', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const facturaId = Number(req.params.id);
+    if (!facturaId) return res.status(400).json({ ok:false, message:'factura id inválido' });
+
+    await conn.beginTransaction();
+    const [facs] = await conn.query('SELECT id, status, mesas_mix_id FROM facturas WHERE id = ? LIMIT 1', [facturaId]);
+    if (!facs.length) {
+      await conn.rollback();
+      return res.status(404).json({ ok:false, message:'factura no encontrada' });
+    }
+    const fac = facs[0];
+
+    if (String(fac.status).toUpperCase() === 'PAGADA') {
+      await conn.rollback();
+      return res.status(409).json({ ok:false, message:'no se puede eliminar una factura pagada' });
+    }
+
+    // Borrar detalles y reservas vinculadas
+    await conn.query('DELETE FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+    await conn.query('DELETE FROM reservas WHERE factura_id = ?', [facturaId]);
+    await conn.query('DELETE FROM facturas WHERE id = ?', [facturaId]);
+
+    // Limpiar mesas_mix si no tiene referencias
+    try {
+      const mixId = fac.mesas_mix_id;
+      if (mixId) {
+        const [[{ cnt }]] = await conn.query('SELECT COUNT(*) AS cnt FROM facturas WHERE mesas_mix_id = ?', [mixId]);
+        const [[{ cntR }]] = await conn.query('SELECT COUNT(*) AS cntR FROM reservas WHERE mesas_mix_id = ?', [mixId]);
+        if (Number(cnt) === 0 && Number(cntR) === 0) {
+          await conn.query('DELETE FROM mesas_mix WHERE id = ?', [mixId]);
+        }
+      }
+    } catch {}
+
+    await conn.commit();
+    return res.json({ ok:true, deleted:true });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    return res.status(500).json({ ok:false, message: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 export default router;

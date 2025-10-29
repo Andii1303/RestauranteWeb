@@ -5,12 +5,48 @@ document.addEventListener('DOMContentLoaded', () => {
   const totalPrecioEl = document.getElementById('total-precio');
   const contComprando = document.getElementById('continuar-comprando');
   const pagarBtn = document.getElementById('pagar-carrito');
+  const cancelarBtn = document.getElementById('cancelar-reserva');
   const tpl = document.getElementById('tpl-carrito-item');
 
   let carrito = { items: {} };
 
   contComprando.addEventListener('click', () => { window.location.href = '/cliente/menu.html'; });
   pagarBtn.addEventListener('click', () => { window.location.href = '/payments/pagar.html'; });
+  cancelarBtn.addEventListener('click', async () => {
+    const proceed = window.confirm('¿Cancelar la reserva actual y eliminar la factura?');
+    if (!proceed) return;
+    const fid = localStorage.getItem('facturaId');
+    try {
+      if (fid) {
+        const resp = await fetch(`/api/facturas/${encodeURIComponent(fid)}`, { method: 'DELETE' });
+        if (!resp.ok) {
+          // Si no se puede borrar (p.ej. ya pagada), intentar marcar CANCELADA como fallback
+          if (resp.status === 409) {
+            try {
+              await fetch('/api/facturas/checkout', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ factura_id: Number(fid), status: 'CANCELADA' })
+              });
+            } catch {}
+          } else {
+            console.warn('No se pudo eliminar la factura, status=', resp.status);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error cancelando factura', err);
+    } finally {
+      // Limpiar estado local y UI
+      try { localStorage.removeItem('facturaId'); } catch {}
+      try { localStorage.removeItem('carritoV2'); } catch {}
+      try { localStorage.removeItem('cartCount'); } catch {}
+      carrito = { items: {} };
+      renderCarrito();
+      CartLib.updateBadge();
+      // Ir al flujo de reservas para iniciar otra
+      window.location.href = '/reserve/reserve.html';
+    }
+  });
 
   function fmtQ(n){ return Number(n||0).toFixed(2); }
 

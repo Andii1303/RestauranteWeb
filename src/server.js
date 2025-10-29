@@ -17,40 +17,23 @@ import menuRouter from './routes/menu.routes.js';
 import facturasRouter from './routes/facturas.routes.js';
 import mesasRouter from './routes/mesas.routes.js';
 
-//###############################################
-//############### DESPLIEGUE ####################
-const express = require('express');
-const cors = require('cors');
-const app = express();
-
-app.use(cors({ origin: process.env.FRONTEND_ORIGIN || '*' }));
-app.use(express.json());
-
-// endpoint de prueba
-app.get('/health', (_req, res) => res.send('ok'));
-
-// Render inyecta PORT
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log(`Listening on ${PORT}`));
-//###############################################
-
-
-
-
+// Resolve __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// App instance
 const app = express();
 
-
-// CORS con credenciales para cookies JWT
-app.use(cors({ origin: true, credentials: true }));
+// CORS: allow explicit frontend origin if provided; otherwise reflect origin (true)
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ? process.env.FRONTEND_ORIGIN : true;
+app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 
 app.use(express.json());
 app.use(cookieParser());
 
 // Inicializa tabla app_users y crea admin si no existe
 async function ensureAuthSetup() {
+  if (!pool) return; // if DB disabled
   await pool.query(`
     CREATE TABLE IF NOT EXISTS app_users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -80,6 +63,7 @@ async function ensureAuthSetup() {
 
 // Espera activa a que la base de datos responda antes de continuar (retry/backoff simple)
 async function waitForDatabase({ attempts = 12, delayMs = 2500 } = {}) {
+  if (!pool) return; // db disabled
   for (let i = 1; i <= attempts; i++) {
     try {
       const [r] = await pool.query('SELECT 1 AS ok');
@@ -107,7 +91,6 @@ app.use(menuRouter);
 app.use(facturasRouter);
 app.use(mesasRouter);
 console.log('Rutas de ingredientes y menú montadas');
-
 
 // Alias específicos públicos (cliente no requiere login)
 app.use('/client', express.static(path.join(__dirname, '../public/cliente')));
@@ -188,6 +171,7 @@ app.get('/reserve', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/reserve/reserve.html'));
 });
 
+// Health endpoint for Render/monitoring
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
@@ -246,7 +230,7 @@ app.get('/debug/routes', (req, res) => {
 // Montar rutas de reservas (si existen)
 app.use(reservasRouter);
 
-
+// 404 final
 app.use((req, res) => {
   const notFound = path.join(__dirname, '../public/404.html');
   return res.status(404).sendFile(notFound, err => {
@@ -255,15 +239,20 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
+const HOST = '0.0.0.0';
 
-// Inicializar todo y arrancar servidor con espera de DB
+// Inicializar todo y arrancar servidor con espera de DB, salvo SKIP_DB=true
 try {
-  await waitForDatabase();
-  // Asegurar esquema mínimo para mesas/reservas/facturas
-  await ensureReservationSchema();
-  await ensureAuthSetup();
-  app.listen(PORT, () => {
-    console.log(`Backend listening on port ${PORT}`);
+  if (process.env.SKIP_DB === 'true') {
+    console.warn('Starting without DB (SKIP_DB=true). Only /health and static content will work.');
+  } else {
+    await waitForDatabase();
+    // Asegurar esquema mínimo para mesas/reservas/facturas
+    await ensureReservationSchema();
+    await ensureAuthSetup();
+  }
+  app.listen(PORT, HOST, () => {
+    console.log(`Backend listening on http://${HOST}:${PORT}`);
   });
 } catch (err) {
   console.error('Fallo crítico al iniciar backend:', err.message);

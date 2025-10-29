@@ -46,6 +46,21 @@
     <div id="lista-ordenes" class="row g-4">
       <!-- Las órdenes se insertan dinámicamente aquí -->
     </div>
+
+    <hr class="my-5" />
+    <h2 class="mb-3">Reservas del día</h2>
+    <div class="row g-3 align-items-end mb-3">
+      <div class="col-auto">
+        <label for="res-fecha" class="form-label">Fecha</label>
+        <input type="date" id="res-fecha" class="form-control" />
+      </div>
+      <div class="col-auto">
+        <button id="res-buscar" class="btn btn-primary">Buscar</button>
+      </div>
+    </div>
+    <div id="lista-reservas" class="row g-4">
+      <!-- Reservas renderizadas aquí -->
+    </div>
   </div>
 
   <script src="index.js"></script>
