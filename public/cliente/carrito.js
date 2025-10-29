@@ -1,3 +1,4 @@
+//Selccion de elemtnos DOM
 document.addEventListener('DOMContentLoaded', () => {
   const carritoContenido = document.getElementById('carrito-contenido');
   const vaciarBtn = document.getElementById('vaciar-carrito');
@@ -7,11 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const pagarBtn = document.getElementById('pagar-carrito');
   const tpl = document.getElementById('tpl-carrito-item');
 
+  //inicializacion carrito
   let carrito = { items: {} };
 
+  //redirecionamiento de botones 
   contComprando.addEventListener('click', () => { window.location.href = '/cliente/menu.html'; });
   pagarBtn.addEventListener('click', () => { window.location.href = '/payments/pagar.html'; });
 
+  //Funciones de formato y renderizado
   function fmtQ(n){ return Number(n||0).toFixed(2); }
 
   function renderCarrito() {
@@ -27,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Render items carrito
     entries.forEach(([key, producto]) => {
       const node = tpl.content.cloneNode(true);
       const title = node.querySelector('[data-el="title"]');
@@ -42,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
       price.textContent = fmtQ(producto.price);
       subtotal.textContent = fmtQ(Number(producto.price||0) * Number(producto.qty||0));
 
+      // eventos de botones
       incr.addEventListener('click', async () => {
         if (!carrito.items[key]) return;
         carrito.items[key].qty += 1;
@@ -69,10 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
       carritoContenido.appendChild(node);
     });
 
+    //totales del carrito 
     totalItemsEl.textContent = String(CartLib.count(carrito));
     totalPrecioEl.textContent = 'Q' + CartLib.total(carrito).toFixed(2);
   }
 
+  //vaciar el carrito 
   vaciarBtn.addEventListener('click', async () => {
     const fid = localStorage.getItem('facturaId');
     carrito = await CartLib.clear(fid);
@@ -80,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     CartLib.updateBadge();
   });
 
+  //inicializacion del carrito
   (async () => {
     const fid = localStorage.getItem('facturaId');
     carrito = await CartLib.hydrate(fid);

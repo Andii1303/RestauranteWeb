@@ -7,12 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
       descripcion: "Deliciosos tacos con ingredientes frescos y salsa picante.",
       imagen: "../Imajenes/Comida/Tacos.png"
     },
-    {
-      nombre: "Pizza Halloween",
-      descripcion: "Pizza temática con ingredientes monstruosamente sabrosos.",
-      imagen: "../Imajenes/Comida/Post Halloween.png"
-    }
-    // Puedes agregar más platos aquí
   ];
 
   platos.forEach((plato, index) => {
