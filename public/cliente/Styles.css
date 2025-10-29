@@ -1,5 +1,7 @@
 body {
   background-color: azure;
+  font-family: 'roboto', sans-serif;
+  background-color: azure;
 }
 
 .navbar-brand {
@@ -66,4 +68,59 @@ h1{
 .d-block { display: block !important; }
 .d-none { display: none !important; }
 .maxw-640 { max-width: 640px; }
+
+.navbar-brand span {
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  background: linear-gradient(to right, #000000, #1c1c1c, #333333);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* Estilo para ensanchar el navbar y aplicar degradado */
+
+/* Carrusel ocupa toda la altura visible */
+.carousel-img {
+  height: 100vh;
+  object-fit: cover;
+}
+
+/* Texto con degradado */
+.text-gradient {
+  background: linear-gradient(to right, #ff8c00, #ffc107);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Animación de entrada */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.8s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.8s ease-out both;
+}
+
 
