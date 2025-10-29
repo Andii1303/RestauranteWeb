@@ -1,20 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const menuGrid = document.getElementById("home-menu-grid");
 
-  const platos = [
-    {
-      nombre: "Tacos Especiales",
-      descripcion: "Deliciosos tacos con ingredientes frescos y salsa picante.",
-      imagen: "../Imajenes/Comida/Tacos.png"
-    },
-    {
-      nombre: "Pizza Halloween",
-      descripcion: "Pizza temática con ingredientes monstruosamente sabrosos.",
-      imagen: "../Imajenes/Comida/Post Halloween.png"
-    }
-    // Puedes agregar más platos aquí
-  ];
-
   platos.forEach((plato, index) => {
     const col = document.createElement("div");
     col.className = "col animate-fade-in";

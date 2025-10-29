@@ -168,6 +168,50 @@ router.get('/api/reservas/draft/:mesaId', async (req, res) => {
 
 export default router;
  
+// Asegurar que una reserva tenga factura BORRADOR vinculada
+// POST /api/reservas/:id/ensure-factura -> { ok:true, factura_id }
+router.post('/api/reservas/:id/ensure-factura', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) { conn.release(); return res.status(400).json({ ok:false, message:'id inválido' }); }
+    await conn.beginTransaction();
+    const [rows] = await conn.query(
+      `SELECT r.id, r.mesa_id, r.mesas_mix_id, r.factura_id, r.reserva_inicio, mm.mesas_csv
+       FROM reservas r LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+       WHERE r.id = ? FOR UPDATE`,
+      [id]
+    );
+    if (!rows.length) { await conn.rollback(); conn.release(); return res.status(404).json({ ok:false, message:'reserva no encontrada' }); }
+    const r = rows[0];
+    if (r.factura_id) {
+      await conn.commit(); conn.release();
+      return res.json({ ok:true, factura_id: r.factura_id });
+    }
+    let mixId = r.mesas_mix_id;
+    let csv = (r.mesas_csv || '').trim();
+    if (!mixId) {
+      if (!csv) {
+        // Intentar derivar desde legacy mesa_id (puede ser string)
+        const nums = String(r.mesa_id||'').split(/[^0-9]+/).map(s=>Number(s)).filter(n=>Number.isFinite(n));
+        csv = nums.length ? nums.join(',') : 'ONLINE';
+      }
+      const [mx] = await conn.query('INSERT INTO mesas_mix (mesas_csv) VALUES (?)', [csv]);
+      mixId = mx.insertId;
+      await conn.query('UPDATE reservas SET mesas_mix_id = ? WHERE id = ?', [mixId, id]);
+    }
+    const [fac] = await conn.query('INSERT INTO facturas (mesas_mix_id, status, reserva_hora) VALUES (?, "BORRADOR", ?)', [mixId, r.reserva_inicio || null]);
+    const facturaId = fac.insertId;
+    await conn.query('UPDATE reservas SET factura_id = ? WHERE id = ?', [facturaId, id]);
+    await conn.commit(); conn.release();
+    res.json({ ok:true, factura_id: facturaId });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    conn.release();
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
 // Listar reservas por día/franja
 // GET /api/reservas/for-day?fecha=YYYY-MM-DD&inicio=HH:MM&fin=HH:MM
 router.get('/api/reservas/for-day', async (req, res) => {
@@ -180,11 +224,11 @@ router.get('/api/reservas/for-day', async (req, res) => {
     const start = `${fecha} ${inicio}:00`;
     const end = `${fecha} ${fin}:00`;
 
-    let rows;
+  let rows;
     try {
       [rows] = await pool.query(
         `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
-                mm.mesas_csv, f.cliente_nombre
+                r.factura_id, mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
          FROM reservas r
          LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
          LEFT JOIN facturas f ON f.id = r.factura_id
@@ -209,6 +253,8 @@ router.get('/api/reservas/for-day', async (req, res) => {
         inicio: r.reserva_inicio,
         fin: r.reserva_fin,
         status: r.status,
+        factura_id: r.factura_id || null,
+        mesas_mix_id: r.mesas_mix_id || null,
         cliente: r.cliente_nombre || null,
         mesas,
       };
@@ -216,6 +262,87 @@ router.get('/api/reservas/for-day', async (req, res) => {
     res.json({ ok:true, items });
   } catch (err) {
     res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+// Obtener detalle de una reserva específica
+router.get('/api/reservas/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ ok:false, message:'id inválido' });
+    const [rows] = await pool.query(
+      `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
+              r.factura_id, mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
+       FROM reservas r
+       LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+       LEFT JOIN facturas f ON f.id = r.factura_id
+       WHERE r.id = ?
+       LIMIT 1`,
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ ok:false, message:'reserva no encontrada' });
+    const r = rows[0];
+    const mesas = String(r.mesas_csv||'').split(',').map(s=>s.trim()).filter(Boolean);
+    res.json({ ok:true, item: {
+      id: r.id,
+      inicio: r.reserva_inicio,
+      fin: r.reserva_fin,
+      status: r.status,
+      factura_id: r.factura_id || null,
+      mesas_mix_id: r.mesas_mix_id || null,
+      cliente: r.cliente_nombre || null,
+      mesas,
+    }});
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+// Actualizar las mesas asignadas a una reserva (reemplaza el CSV)
+// PATCH /api/reservas/:id/mesas { mesas: "1,2,3" | [1,2,3] }
+router.patch('/api/reservas/:id/mesas', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) { conn.release(); return res.status(400).json({ ok:false, message:'id inválido' }); }
+    let mesasIn = req.body?.mesas;
+    if (!mesasIn && typeof req.body?.mesas_csv === 'string') mesasIn = req.body.mesas_csv;
+    if (!mesasIn) { conn.release(); return res.status(400).json({ ok:false, message:'mesas requerido' }); }
+
+    // Normalizar a arreglo de enteros únicos
+    let arr = [];
+    if (Array.isArray(mesasIn)) arr = mesasIn.map(x=>Number(x)).filter(n=>Number.isFinite(n));
+    else if (typeof mesasIn === 'string') arr = mesasIn.split(',').map(s=>Number(s.trim())).filter(n=>Number.isFinite(n));
+    arr = Array.from(new Set(arr));
+    if (arr.length === 0) { conn.release(); return res.status(400).json({ ok:false, message:'lista de mesas vacía' }); }
+
+    await conn.beginTransaction();
+    const [rows] = await conn.query(
+      `SELECT r.id, r.mesas_mix_id, mm.mesas_csv
+       FROM reservas r LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+       WHERE r.id = ? FOR UPDATE`,
+      [id]
+    );
+    if (!rows.length) { await conn.rollback(); conn.release(); return res.status(404).json({ ok:false, message:'reserva no encontrada' }); }
+    const r = rows[0];
+
+    let mixId = r.mesas_mix_id;
+    const csv = arr.join(',');
+    if (!mixId) {
+      const [mx] = await conn.query('INSERT INTO mesas_mix (mesas_csv) VALUES (?)', [csv]);
+      mixId = mx.insertId;
+      await conn.query('UPDATE reservas SET mesas_mix_id = ? WHERE id = ?', [mixId, id]);
+    } else {
+      await conn.query('UPDATE mesas_mix SET mesas_csv = ? WHERE id = ?', [csv, mixId]);
+    }
+
+    await conn.commit();
+    res.json({ ok:true, mesas: arr, mesas_csv: csv, mesas_mix_id: mixId });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ ok:false, message: err.message });
+  } finally {
+    conn.release();
   }
 });
 
@@ -238,6 +365,20 @@ router.patch('/api/reservas/:id/attendance', async (req, res) => {
       }
       throw err;
     }
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+// Fallback: confirmar asistencia por factura
+router.patch('/api/reservas/by-factura/:facturaId/attendance', async (req, res) => {
+  try {
+    const facturaId = Number(req.params.facturaId);
+    if (!facturaId) return res.status(400).json({ ok:false, message:'facturaId inválido' });
+    const attended = !!(req.body?.attended ?? true);
+    const [r] = await pool.query('UPDATE reservas SET asistencia_confirmada = ? WHERE factura_id = ?', [attended ? 1 : 0, facturaId]);
+    if (r.affectedRows === 0) return res.status(404).json({ ok:false, message:'reserva no encontrada para la factura' });
+    return res.json({ ok:true, factura_id: facturaId, asistencia_confirmada: attended ? 1 : 0 });
   } catch (err) {
     res.status(500).json({ ok:false, message: err.message });
   }

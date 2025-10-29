@@ -96,3 +96,8 @@ la experiencia de usuario.
 	- listado de reservas del día con filtros de fecha/hora y tarjetas.
 	- Endpoint /api/reservas/for-day para obtener reservas filtradas.
 	- Modularización de código: HTML, JS y CSS separados para el mesero.
+
+### Versión 1.6.1 (28/10/2025)
+- Panel de mesero:
+	- Agregar botones de agregagar mesa, agregar menu (update de reserva)
+	- mejoras en interfaz de tarjeta de reserva

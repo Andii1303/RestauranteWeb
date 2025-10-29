@@ -306,3 +306,44 @@ router.delete('/api/facturas/:id', async (req, res) => {
 });
 
 export default router;
+
+// Actualizar las mesas de la factura (vía su mesas_mix)
+// PATCH /api/facturas/:id/mesas { mesas: "1,2,3" | [1,2,3] }
+router.patch('/api/facturas/:id/mesas', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const facturaId = Number(req.params.id);
+    if (!facturaId) { conn.release(); return res.status(400).json({ ok:false, message:'factura id inválido' }); }
+    let mesasIn = req.body?.mesas ?? req.body?.mesas_csv;
+    if (!mesasIn) { conn.release(); return res.status(400).json({ ok:false, message:'mesas requerido' }); }
+    let arr = [];
+    if (Array.isArray(mesasIn)) arr = mesasIn.map(Number).filter(Number.isFinite);
+    else if (typeof mesasIn === 'string') arr = mesasIn.split(',').map(s=>Number(s.trim())).filter(Number.isFinite);
+    arr = Array.from(new Set(arr));
+    if (!arr.length) { conn.release(); return res.status(400).json({ ok:false, message:'lista de mesas vacía' }); }
+
+    await conn.beginTransaction();
+    const [f] = await conn.query('SELECT id, mesas_mix_id FROM facturas WHERE id = ? FOR UPDATE', [facturaId]);
+    if (!f.length) { await conn.rollback(); conn.release(); return res.status(404).json({ ok:false, message:'factura no encontrada' }); }
+    const mixId = f[0].mesas_mix_id;
+    const csv = arr.join(',');
+    if (!mixId) {
+      const [mx] = await conn.query('INSERT INTO mesas_mix (mesas_csv) VALUES (?)', [csv]);
+      await conn.query('UPDATE facturas SET mesas_mix_id = ? WHERE id = ?', [mx.insertId, facturaId]);
+    } else {
+      await conn.query('UPDATE mesas_mix SET mesas_csv = ? WHERE id = ?', [csv, mixId]);
+    }
+    // Propagar a reservas vinculadas (si existen)
+    try {
+      await conn.query('UPDATE reservas SET mesas_mix_id = (SELECT mesas_mix_id FROM facturas WHERE id = ?) WHERE factura_id = ?', [facturaId, facturaId]);
+    } catch {}
+
+    await conn.commit();
+    res.json({ ok:true, mesas: arr, mesas_csv: csv });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ ok:false, message: err.message });
+  } finally {
+    conn.release();
+  }
+});
