@@ -37,3 +37,6 @@ coverage/
 # Otros
 #########################
 *.pid
+
+# Do not commit local secrets
+stripe.txt

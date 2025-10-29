@@ -9,21 +9,25 @@ const {
   DB_USER = "appuser",
   DB_PASSWORD = "App12345!",
   DB_NAME = "restauranteDB",
+  SKIP_DB = "false",
 } = process.env;
 
-export const pool = mysql.createPool({
-  host: DB_HOST,
-  port: Number(DB_PORT),
-  user: DB_USER,
-  password: DB_PASSWORD,
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+export const pool = SKIP_DB === 'true'
+  ? null
+  : mysql.createPool({
+      host: DB_HOST,
+      port: Number(DB_PORT),
+      user: DB_USER,
+      password: DB_PASSWORD,
+      database: DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
 
 // Helper opcional para ping
 export async function ping() {
+  if (!pool) return { ok: 1, db: null, now: new Date().toISOString(), skipped: true };
   const [rows] = await pool.query(
     "SELECT 1 AS ok, DATABASE() AS db, NOW() AS now;"
   );
@@ -33,6 +37,7 @@ export async function ping() {
 // Inicializa de forma segura el esquema mínimo usado por reservas/mesas/facturas.
 // Solo crea tablas si no existen; NO altera estructuras existentes.
 export async function ensureReservationSchema() {
+  if (!pool) return; // DB disabled
   // Tabla de mesas
   await pool.query(`
     CREATE TABLE IF NOT EXISTS mesas (

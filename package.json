@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "src/index.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "start:local": "node -r dotenv/config src/index.js dotenv_config_path=.env.local",
-    "dev": "nodemon --watch src --ext js --exec node src/index.js",
+    "start": "node src/server.js",
+    "start:local": "node -r dotenv/config src/server.js dotenv_config_path=.env.local",
+    "dev": "nodemon --watch src --ext js --exec node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -25,5 +25,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  }
+  },
+  "engines": { "node": ">=18" }
 }

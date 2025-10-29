@@ -31,7 +31,7 @@ services:
       - ./src:/app/src
       - ./public:/app/public
 
-    command: ["node", "--watch", "src/index.js"]
+  command: ["node", "--watch", "src/server.js"]
 
   web:
     image: nginx:alpine
