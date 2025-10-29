@@ -74,6 +74,7 @@
     </div>
   </div>
 </nav>
+
 <!-- Carrusel central con estilo moderno y redimensionado -->
 <div class="container-fluid px-0">
   <div id="carouselCentral" class="carousel slide carousel-fade" data-bs-ride="carousel">
@@ -130,18 +131,42 @@
   </div>
 </div>
 
-<!-- Sección sobre nosotros -->
+<!-- Sección informativa-->
 <div class="container my-5">
-  <h3 class="text-center mb-4 fw-bold text-gradient">Más Sobre Nosotros</h3>
-  <div class="position-relative text-center menu_image_container">
-    <img src="../Imajenes/postMenu.png" alt="Más sobre nosotros" class="img-fluid rounded-4 shadow-lg">
-    <a href="modulos/comida.html" class="btn btn-warning text-dark position-absolute top-50 start-50 translate-middle px-5 py-3 fs-5 fw-bold shadow-sm">
-      Ir al menú
-    </a>
+  <h3 class="text-center mb-4 fw-bold text-gradient">Conoce más</h3>
+  <div class="row row-cols-1 row-cols-md-2 g-4">
+    
+    <!-- Card: Comparte con nosotros -->
+    <div class="col animate-fade-in">
+      <div class="card h-100 shadow-sm border-0">
+        <img src="https://www.shutterstock.com/image-photo/caucasian-waiter-receiving-order-serving-600nw-2427764365.jpg" class="card-img-top img-fluid rounded-top" alt="Reserva tu mesa">
+        <div class="card-body">
+          <h5 class="card-title fw-bold">Comparte con nosotros</h5>
+          <p class="card-text">Puedes reservar tu mesa y disfrutar momentos especiales con quienes más quieres.</p>
+          <a href="/reserve/reserve.html" class="btn btn-warning text-dark fw-semibold">Reservar ahora</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Menú en línea -->
+    <div class="col animate-fade-in">
+      <div class="card h-100 shadow-sm border-0">
+        <img src="https://img.freepik.com/vector-premium/entrega-pedidos-linea_24911-68898.jpg" class="card-img-top img-fluid rounded-top" alt="Menú en línea">
+        <div class="card-body">
+          <h5 class="card-title fw-bold">Menú en línea</h5>
+          <p class="card-text">Puedes pedir tu comida favorita para llevar desde nuestro menú digital.</p>
+          <a href="/cliente/menu.html" class="btn btn-outline-primary fw-semibold">Ver menú</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 
+
+  <!--Animacion JS-->
+  <script src="indexCliente.js"></script>
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <template id="tpl-home-card">

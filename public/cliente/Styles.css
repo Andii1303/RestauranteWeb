@@ -89,6 +89,7 @@ h1{
 .text-gradient {
   background: linear-gradient(to right, #ff8c00, #ffc107);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -122,5 +123,36 @@ h1{
 .animate-fade-in {
   animation: fadeInUp 0.8s ease-out both;
 }
+
+.text-gradient {
+  background: linear-gradient(to right, #ff8c00, #ffc107);
+  background-clip: text;              /* Standard property */
+  -webkit-background-clip: text;      /* WebKit prefix for Chrome/Safari */
+  color: transparent;
+  -webkit-text-fill-color: transparent; /* Required for WebKit to render transparent text */
+}
+
+
+.card-img-top {
+  height: 250px;
+  object-fit: cover;
+}
+
+/* Animación de entrada */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.8s ease-out both;
+}
+
 
 
