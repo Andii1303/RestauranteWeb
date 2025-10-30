@@ -97,7 +97,7 @@ function initReservasUI() {
     cont.textContent = '';
     const fecha = inputFecha.value;
     if (!fecha) return;
-    const url = `/api/reservas/for-day?fecha=${encodeURIComponent(fecha)}&inicio=00:00&fin=23:59`;
+    const url = `/api/reservas/for-day?fecha=${encodeURIComponent(fecha)}&inicio=00:00&fin=23:59&includeItems=1`;
     try {
       const r = await fetch(url);
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -124,9 +124,22 @@ function initReservasUI() {
         const card = h('div', { className: 'card shadow-sm' });
         const body = h('div', { className: 'card-body' });
         const title = h('h5', { className: 'card-title', text: `Reserva #${rv.id}` });
-        const subt = h('div', { className: 'text-muted mb-2', text: `${(rv.mesas||[]).join(', ') || 'Mesas ?'}` });
+        const subt = h('div', { className: 'text-muted mb-2', text: `Mesas: ${(rv.mesas||[]).join(', ') || '—'}` });
         const horario = h('div', { className: 'mb-2', text: `${fmtHora(rv.inicio)} - ${fmtHora(rv.fin)}` });
         const cliente = h('div', { className: 'mb-3', text: rv.cliente ? `Cliente: ${rv.cliente}` : 'Cliente: —' });
+
+        // Lista de menú solicitado (agregado de factura principal + extras hija)
+        const menuTitle = h('h6', { className: 'mt-2', text: 'Pedido (menú):' });
+        const ul = h('ul', { className: 'mb-3' });
+        const menu = Array.isArray(rv.menu) ? rv.menu : [];
+        if (!menu.length) {
+          ul.appendChild(h('li', { className: 'text-muted', text: 'Sin items registrados.' }));
+        } else {
+          menu.forEach(mi => {
+            const linea = `${mi.nombre} x${mi.cantidad}`;
+            ul.appendChild(h('li', { text: linea }));
+          });
+        }
         const actions = h('div', { className: 'd-flex gap-2 align-items-center' });
         const btn = h('button', { className: 'btn btn-sm btn-success', text: 'Marcar asistencia' });
         const badge = h('span', { className: 'badge text-bg-secondary d-none', text: 'Asistencia verificada' });
@@ -155,6 +168,8 @@ function initReservasUI() {
         body.appendChild(subt);
         body.appendChild(horario);
         body.appendChild(cliente);
+        body.appendChild(menuTitle);
+        body.appendChild(ul);
         body.appendChild(actions);
         card.appendChild(body);
         col.appendChild(card);

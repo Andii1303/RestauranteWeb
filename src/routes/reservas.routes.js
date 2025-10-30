@@ -243,6 +243,7 @@ router.get('/api/reservas/for-day', async (req, res) => {
     const fecha = String(req.query?.fecha || '').trim();
     const inicio = String(req.query?.inicio || '00:00').trim();
     const fin = String(req.query?.fin || '23:59').trim();
+    const includeItems = String(req.query?.includeItems || '0') === '1';
     if (!fecha) return res.status(400).json({ ok:false, message:'fecha requerida' });
     if (inicio >= fin) return res.json({ ok:true, items: [] });
     const start = `${fecha} ${inicio}:00`;
@@ -272,7 +273,7 @@ router.get('/api/reservas/for-day', async (req, res) => {
     }
 
     // Enriquecer con nombres de mesas a partir de CSV
-    const items = rows.map(r => {
+    const baseItems = rows.map(r => {
       const mesas = String(r.mesas_csv||'').split(',').map(s=>s.trim()).filter(Boolean);
       return {
         id: r.id,
@@ -286,7 +287,33 @@ router.get('/api/reservas/for-day', async (req, res) => {
         asistencia_confirmada: (typeof r.asistencia_confirmada === 'number' ? r.asistencia_confirmada : 0),
       };
     });
-    res.json({ ok:true, items });
+
+    // Si se solicita, anexar los ítems de menú por reserva (considerando factura principal + extras hijas)
+    if (includeItems && baseItems.length) {
+      for (const it of baseItems) {
+        try {
+          const facturaId = Number(it.factura_id) || null;
+          if (!facturaId) { it.menu = []; continue; }
+          const [children] = await pool.query('SELECT id FROM facturas WHERE parent_factura_id = ? AND es_extra = 1', [facturaId]);
+          const ids = [facturaId, ...children.map(c => c.id)];
+          // Agregar por item para consolidar cantidades
+          const [menuRows] = await pool.query(
+            `SELECT item_type, menu_item_id, nombre, SUM(cantidad) AS cantidad,
+                    CASE WHEN SUM(cantidad) > 0 THEN ROUND(SUM(subtotal)/SUM(cantidad), 2) ELSE MAX(precio_unit) END AS precio_unit
+               FROM detalles_factura
+              WHERE factura_id IN (?)
+              GROUP BY item_type, menu_item_id, nombre
+              ORDER BY MIN(id)`
+            , [ids]
+          );
+          it.menu = menuRows;
+        } catch (e) {
+          it.menu = [];
+        }
+      }
+    }
+
+    res.json({ ok:true, items: baseItems });
   } catch (err) {
     res.status(500).json({ ok:false, message: err.message });
   }

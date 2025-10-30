@@ -12,9 +12,10 @@ let FACTURA_MODE = false;
 let FACTURA_ID = null;
 let FACTURA_ITEMS = [];
 
-async function fetchFacturaDetalles(facturaId) {
+async function fetchFacturaDetalles(facturaId, opts = {}) {
   try {
-    const r = await fetch(`/api/facturas/${facturaId}/detalles`);
+    const unpaidOnly = opts.unpaidOnly ? '1' : '0';
+    const r = await fetch(`/api/facturas/${facturaId}/detalles${opts && opts.unpaidOnly ? `?unpaidOnly=${unpaidOnly}` : ''}`);
     if (!r.ok) throw new Error('No se pudo obtener detalles de la factura');
     const j = await r.json();
     if (!j.ok) throw new Error(j.message || 'Error en detalles de factura');
@@ -92,8 +93,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       msg.textContent = 'Estás pagando un extra añadido a la factura original.';
       resumen.parentElement.insertBefore(msg, resumen);
     }
-    // Cargar detalles de la factura
-    const detalles = await fetchFacturaDetalles(facturaIdParam);
+    // Cargar detalles de la factura (si es extra, solo ítems no pagados)
+    const detalles = await fetchFacturaDetalles(facturaIdParam, { unpaidOnly: !!isExtra });
     FACTURA_ITEMS = detalles.items || [];
     renderSummary();
   } else {
@@ -114,6 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let payload;
     if (FACTURA_MODE) {
+      if (!FACTURA_ITEMS.length) { alert('No hay ítems pendientes por pagar en esta factura.'); return; }
       // Pago directo de factura existente
       payload = {
         factura_id: Number(FACTURA_ID),

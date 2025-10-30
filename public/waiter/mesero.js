@@ -183,9 +183,13 @@ async function fetchReservas() {
           const payload = { menu_item_id: itSel.id, nombre: itSel.name, cantidad, precio_unit: Number(itSel.price) || 0, item_type: itSel.type || 'PLATO', extra: true };
           const r = await fetch(`/api/facturas/${facturaId}/detalles`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
           const jr = await r.json(); if (!jr?.ok && jr?.total == null) return alert(jr?.message || 'No se pudo agregar item');
-          alert('Ítem agregado a la factura. Ahora serás dirigido al pago de extras.');
-          // Redirigir a la pantalla de pago con el mismo factura_id y extra=1
-          window.location.href = `/public/payments/pagar.html?factura_id=${encodeURIComponent(facturaId)}&extra=1`;
+          const finalId = jr?.factura_id_final || facturaId;
+          alert('Ítem agregado. Ahora serás dirigido al pago.');
+          // Guardar también en localStorage por compatibilidad (opcional)
+          try { localStorage.setItem('facturaId', String(finalId)); } catch {}
+          // Redirigir a la pantalla de pago con la factura objetivo
+          const isExtra = finalId !== facturaId ? '1' : '0';
+          window.location.href = `/payments/pagar.html?factura_id=${encodeURIComponent(finalId)}&extra=${isExtra}`;
         } catch { alert('Error al agregar ítem'); }
       });
       actions.appendChild(btnMenu); body.appendChild(actions);
