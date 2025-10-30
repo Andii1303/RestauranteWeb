@@ -8,7 +8,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ping, pool, ensureReservationSchema } from './db.js';
 import authRouter from './routes/auth.routes.js';
-import { verifyToken, requireRole } from './middleware/auth.js';
 
 import reservasRouter from './routes/reservas.routes.js';
 import usersRouter from './routes/users.routes.js';

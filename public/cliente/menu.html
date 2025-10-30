@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="./menu.css">
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex d-flex flex-column main-vh-100">
 <!--navBar-->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-3 fixed-top" id="mainNavBar">
   <div class="container-fluid">
@@ -60,12 +60,10 @@
 
       <!-- Búsqueda y botón de inicio -->
       <div class="d-flex flex-wrap align-items-center gap-3">
-        <!-- Barra de búsqueda con lupa integrada -->
-        <form class="position-relative" role="search">
-          <input class="form-control rounded-pill ps-5" type="search" placeholder="Buscar" aria-label="Buscar">
-          <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-        </form>
+<<<<<<< HEAD
+=======
 
+>>>>>>> 97021db (mejora en tarjetas de reserva panel mesero || version 1.6.1.2)
         <!-- Botón de inicio de sesión -->
         <a href="/login/login.html" class="btn btn-outline-light rounded-pill">
           <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar
@@ -75,6 +73,7 @@
   </div>
 </nav>
 
+<main class="flex-grow-1">
 <!-- Botón desplegable  -->
 <div class="dropdown">
   <button class="btn custom-toggler" type="button" id="menuCategorias" data-bs-toggle="dropdown" aria-expanded="false">
@@ -222,46 +221,46 @@
     }
   });
 </script>
-
+</main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-<footer class="bg-dark text-white pt-4 pb-2">
-  <div class="container">
-    <div class="row">
+  
+  <footer class="bg-dark text-white pt-4 pb-2">
+  <div class="container py-4">
+    <div class="row align-items-center">
 
-      <!-- Información de la empresa -->
-      <div class="col-md-6 mb-3">
-        <h5>Mirestaurante</h5>
-        <p>© 2025 Mirestaurante. Todos los derechos reservados.</p>
+      <!-- Marca e información -->
+      <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
+        <h5 class="fw-bold">MiRestaurante</h5>
+        <p class="small mb-0">© 2025 MiRestaurante. Todos los derechos reservados.</p>
       </div>
 
-      <!-- Enlaces -->
-      <div class="col-md-3 mb-3">
-        <h6>Información</h6>
-        <ul class="list-unstyled">
-          <li><a href="infoRestaurante.html" class="text-white text-decoration-none">Quiénes somos</a></li>
-          <li><a href="infoRestaurante.html" class="text-white text-decoration-none">Visión</a></li>
-          <li><a href="infoRestaurante.html" class="text-white text-decoration-none">Misión</a></li>
+      <!-- Enlaces rápidos -->
+      <div class="col-md-4 text-center mb-3 mb-md-0">
+        <h6 class="fw-semibold">Información</h6>
+        <ul class="list-inline mb-0">
+          <li class="list-inline-item"><a href="infoRestaurante.html" class="footer-link">Quiénes somos</a></li>
+          <li class="list-inline-item"><a href="infoRestaurante.html" class="footer-link">Visión</a></li>
+          <li class="list-inline-item"><a href="infoRestaurante.html" class="footer-link">Misión</a></li>
         </ul>
       </div>
 
       <!-- Redes sociales -->
-      <div class="col-md-3 mb-3">
-        <h6>Síguenos</h6>
-        <a href="https://facebook.com" target="_blank" class="text-white me-3">
-          <i class="fab fa-facebook fa-lg"></i>
+      <div class="col-md-4 text-center text-md-end">
+        <h6 class="fw-semibold">Síguenos</h6>
+        <a href="https://facebook.com" target="_blank" class="footer-icon me-2">
+          <i class="fab fa-facebook-f"></i>
         </a>
-        <a href="https://instagram.com" target="_blank" class="text-white me-3">
-          <i class="fab fa-instagram fa-lg"></i>
+        <a href="https://instagram.com" target="_blank" class="footer-icon me-2">
+          <i class="fab fa-instagram"></i>
         </a>
-        <a href="https://tiktok.com" target="_blank" class="text-white">
-          <i class="fab fa-tiktok fa-lg"></i>
+        <a href="https://tiktok.com" target="_blank" class="footer-icon">
+          <i class="fab fa-tiktok"></i>
         </a>
       </div>
 
     </div>
   </div>
 </footer>
-
+</body>
 </html>

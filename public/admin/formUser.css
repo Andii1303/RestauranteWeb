@@ -1,0 +1,13 @@
+body { font-family: system-ui, Arial, sans-serif; margin: 2rem; background:#f7f7f7; }
+h1 { margin-bottom: 1rem; font-size: 1.6rem; }
+form { max-width: 420px; background:#fff; padding:1.25rem 1.5rem; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.08); }
+label { display:block; font-weight:600; margin-top:.85rem; }
+input, select { width:100%; padding:.55rem .65rem; margin-top:.35rem; border:1px solid #ccc; border-radius:4px; font-size:.95rem; }
+button { margin-top:1.2rem; width:100%; padding:.7rem .9rem; background:#0d6efd; border:none; color:#fff; font-size:1rem; font-weight:600; border-radius:6px; cursor:pointer; }
+button:disabled { opacity:.6; cursor:not-allowed; }
+.msg { margin-top:1rem; font-size:.9rem; }
+.msg.ok { color: #137c36; }
+.msg.err { color: #b21e1e; }
+nav { margin-bottom:1.5rem; }
+nav a { text-decoration:none; margin-right:.75rem; color:#0d6efd; font-weight:500; }
+.small { font-size:.75rem; color:#666; margin-top:.15rem; }

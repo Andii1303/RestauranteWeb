@@ -15,6 +15,10 @@ const {
 } = process.env;
 
 const sslOption = DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 353ec34ff2203e48f99428bdb512ae3971c3c937
 export const pool = SKIP_DB === 'true'
   ? null
   : mysql.createPool({

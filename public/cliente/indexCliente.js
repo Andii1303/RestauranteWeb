@@ -1,3 +1,5 @@
+// Datos de ejemplo para los platos del menú
+
 document.addEventListener("DOMContentLoaded", () => {
   const menuGrid = document.getElementById("home-menu-grid");
 

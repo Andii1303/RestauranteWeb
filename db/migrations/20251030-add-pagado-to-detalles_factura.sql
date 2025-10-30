@@ -1,0 +1,1 @@
+ALTER TABLE detalles_factura ADD COLUMN pagado TINYINT(1) NOT NULL DEFAULT 0;
