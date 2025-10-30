@@ -22,3 +22,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+//nav bar estatico 
+  window.addEventListener("scroll", () => {
+    const navbar = document.getElementById("mainNavbar");
+    if (window.scrollY > 50) {
+      navbar.classList.add("navbar-shrink");
+    } else {
+      navbar.classList.remove("navbar-shrink");
+    }
+  });
+
+  //cambio de color en el navbar 
+    window.addEventListener("scroll", () => {
+    const navbar = document.getElementById("mainNavbar");
+    if (window.scrollY > 50) {
+      navbar.classList.add("navbar-scrolled");
+    } else {
+      navbar.classList.remove("navbar-scrolled");
+    }
+  });

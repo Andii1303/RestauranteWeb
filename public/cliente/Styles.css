@@ -1,5 +1,6 @@
 /* === General === */
 body {
+  padding-top: 80px;
   background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
   background-image: url("https://media.istockphoto.com/id/1149011243/es/vector/vector-horizontal-ilustraci%C3%B3n-de-un-fondo-gris-azulado-claro-y-con-textura-grunge.jpg?s=612x612&w=0&k=20&c=y-Z3vFjTdTMbzOBbOWEnzkr_m-2MuZXFxCG62DppP0I=");
   background-repeat: repeat;
@@ -86,7 +87,7 @@ h1 {
   padding: 10px;
 }
 
-/* === Cards === */
+/* === carousel Cards === */
 .card {
   transition: transform 0.6s ease, box-shadow 0.3s ease;
 }
@@ -156,7 +157,7 @@ h1 {
   object-fit: cover;
 }
 
-/* === Sidebar fija (si usas paneles) === */
+/* === Sidebar fija === */
 .sidebar-fixed {
   width: 250px;
   min-height: 100vh;
@@ -170,4 +171,109 @@ form[role="search"] .bi-search {
   pointer-events: none;
   font-size: 1rem;
   color: #6c757d;
+}
+
+/* Sección amarilla centrada y animada */
+.seccion-amarilla {
+  width: 100%;
+  height: 120px; /* ocupa toda la altura visible */
+  background-color: #ffc107;
+  animation: fadeInBackground 1.5s ease-out both;
+}
+
+/* Texto animado */
+.texto-animado {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #212529;
+  animation: fadeInText 1.5s ease-out both;
+}
+
+/* Animación del fondo */
+@keyframes fadeInBackground {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animación del texto */
+@keyframes fadeInText {
+  from {
+    opacity: 0;
+    letter-spacing: -2px;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 1px;
+    transform: scale(1);
+  }
+}
+
+/* Navbar fijo */
+body {
+  padding-top: 80px; /* evita que el contenido se esconda debajo del navbar */
+}
+
+/* Estado normal del navbar */
+#mainNavbar {
+  transition: background-color 0.3s ease, padding 0.3s ease;
+}
+
+/* Estado reducido y con color dinámico */
+.navbar-scrolled {
+  background-color: #ffca2c !important; /* Amarillo Bootstrap */
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+}
+
+/* Fondo suave para la sección */
+.seccion-nosotros {
+  background: linear-gradient(to bottom right, #fffbe6, #fff3cd);
+  padding: 3rem 0;
+  border-radius: 1rem;
+}
+
+/* Título animado */
+.titulo-seccion {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #212529;
+  animation: fadeInText 1.2s ease-out both;
+}
+
+/* Imagen con animación sutil */
+.animate-img {
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.animate-img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+/* Botón animado */
+.animate-boton {
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.animate-boton:hover {
+  background-color: #ffdd57;
+  transform: scale(1.05);
+}
+
+/* Animación de entrada */
+@keyframes fadeInText {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

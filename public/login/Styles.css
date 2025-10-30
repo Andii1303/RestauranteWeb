@@ -1,5 +1,5 @@
 body {
-  background-color: azure;
+  background: linear-gradient(to right, #f8f9fa, #e9ecef);;
 }
 
 .navbar-brand {
@@ -55,3 +55,6 @@ h1{
 /* Utilidad para ocultar/mostrar */
 .d-none { display: none !important; }
 
+.card {
+  border-radius: 10px;
+}
