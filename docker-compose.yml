@@ -30,12 +30,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./public:/app/public
-<<<<<<< HEAD
     command: ["node", "--watch", "src/server.js"]
-=======
-
-  command: ["node", "--watch", "src/server.js"]
->>>>>>> db89f6c (chore: reapply Render prep on master  server.js entry, CORS + /health, optional SKIP_DB; update env example; ignore stripe.txt; Docker updated)
 
   web:
     image: nginx:alpine
