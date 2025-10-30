@@ -32,8 +32,6 @@
       <h6>Administrar</h6>
       <ul class="nav flex-column mb-3">
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('reserva')">Reservas</a></li>
-        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('mesas')">Mesas</a></li>
-        <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('agregar')">Agregar Alimentos</a></li>
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('ver')">Ver</a></li>
         <li><a href="#" class="nav-link text-white" onclick="mostrarSeccion('ordenes')">Órdenes</a></li>
       </ul>
@@ -59,33 +57,6 @@
           <button id="w-filtrar" class="btn btn-primary">Filtrar</button>
         </div>
         <div id="w-reservas" class="row g-3"></div>
-      </div>
-      <!-- Mesas -->
-      <div id="mesas" class="seccion">
-        <h3>Estado de las Mesas Ocupadas</h3>
-        <div id="contenedor-mesas" class="row"></div>
-
-        <h4 class="mt-4">Asignar mesa</h4>
-        <form id="form-mesa" class="row g-3 mb-4">
-          <div class="col-md-3">
-            <select id="mesa-select" class="form-select" required></select>
-          </div>
-          <div class="col-md-3">
-            <input type="text" id="nombre" class="form-control" placeholder="Nombre" required>
-          </div>
-          <div class="col-md-3">
-            <input type="text" id="apellido" class="form-control" placeholder="Apellido" required>
-          </div>
-          <div class="col-md-3">
-            <button type="submit" class="btn btn-primary w-100">Ocupar Mesa</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Agregar Alimentos -->
-      <div id="agregar" class="seccion d-none">
-        <h3>Agregar alimentos por mesa</h3>
-        <div id="contenedor-alimentos" class="row"></div>
       </div>
 
       <!-- Ver -->

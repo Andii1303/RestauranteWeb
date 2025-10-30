@@ -253,6 +253,7 @@ router.get('/api/reservas/for-day', async (req, res) => {
       [rows] = await pool.query(
         `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
                 COALESCE(r.factura_id, (SELECT id FROM facturas WHERE mesas_mix_id = r.mesas_mix_id ORDER BY id DESC LIMIT 1)) AS factura_id,
+                r.asistencia_confirmada,
                 mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
          FROM reservas r
          LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
@@ -282,6 +283,7 @@ router.get('/api/reservas/for-day', async (req, res) => {
         mesas_mix_id: r.mesas_mix_id || null,
         cliente: r.cliente_nombre || null,
         mesas,
+        asistencia_confirmada: (typeof r.asistencia_confirmada === 'number' ? r.asistencia_confirmada : 0),
       };
     });
     res.json({ ok:true, items });

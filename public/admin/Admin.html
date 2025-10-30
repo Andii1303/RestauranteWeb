@@ -283,15 +283,7 @@
   <script src="./ingredientes.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="./usuarios-admin.js"></script>
-  <script>
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', async () => {
-        try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
-        window.location.href = '/login/login.html';
-      });
-    }
-  </script>
+  <script src="./logout.js"></script>
 
   <footer class="bg-dark text-white pt-4 pb-2 mt-5">
     <div class="container">
