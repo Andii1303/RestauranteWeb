@@ -9,7 +9,7 @@
 </head>
 <body>
 <!--navBar-->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-3">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-3 to fixed-top" id="mainNavbar">
   <div class="container-fluid">
     <!-- Marca -->
     <a class="navbar-brand d-flex align-items-center" href="/cliente/index.html">
@@ -105,6 +105,25 @@
   </div>
 </div>
 
+<!-- Sección destacada: vegetales frescos -->
+<div class="seccion-amarilla text-center py-5">
+  <div class="container-5" id="letras">
+    <h2 class="texto-animado">Todos nuestros vegetales son 100% frescos</h2>
+  </div>  
+</div>
+
+<!-- Sección: Más sobre nosotros -->
+<section class="seccion-nosotros my-5">
+  <div class="container text-center">
+    <h3 class="titulo-seccion mb-4">Más Sobre Nosotros</h3>
+    <div class="menu-image-wrapper position-relative d-inline-block">
+      <img src="../Imajenes/postMenu.png" alt="Más sobre nuestro" class="img-fluid rounded-4 shadow-lg animate-img">
+      <a href="/cliente/menu.html" class="btn btn-warning text-dark position-absolute top-50 start-50 translate-middle px-5 py-3 fs-5 fw-bold animate-boton">
+        Ir al menú
+      </a>
+    </div>
+  </div>
+</section>
 
 <!-- Sección de menú disponible-->
 <div class="container my-5">
@@ -114,7 +133,6 @@
   </div>
 
   <div id="home-menu-grid" class="row row-cols-1 row-cols-md-3 g-4">
-    <!-- Ejemplo de plato animado -->
     <div class="col animate-fade-in">
       <div class="card shadow-sm h-100">
         <img src="../Imajenes/Comida/Tacos.png" class="card-img-top" alt="Tacos">
@@ -137,6 +155,14 @@
     <a href="/cliente/menu.html" class="btn btn-warning text-dark fw-semibold shadow-sm">Ir al menú completo</a>
   </div>
 </div>
+
+<!-- Sección destacada -->
+<div class="seccion-amarilla text-center justify-content-center align-items-center text-center py-5">
+  <div class="container">
+    <h2 class="texto-animado">Mi Restaurante Es una empresa 100% Huehueteca</h2>
+  </div>
+</div>
+
 
 <!-- Sección informativa-->
 <div class="container my-5">
@@ -253,6 +279,7 @@
       }
     });
   </script>
+  
 </body>
 <footer class="bg-dark text-white pt-4 pb-2">
   <div class="container">
