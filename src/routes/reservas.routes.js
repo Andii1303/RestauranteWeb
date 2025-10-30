@@ -116,6 +116,12 @@ router.post("/api/reservas", async (req, res) => {
   res.status(result.status).json(result.body);
 });
 
+// Stub opcional para compatibilidad con UI antigua de cocina
+// GET /api/ordenes -> retorna [] para evitar 404 si la vista intenta cargarlo
+router.get('/api/ordenes', async (_req, res) => {
+  return res.json([]);
+});
+
 // GET /api/ping-reserva (payload de prueba)
 router.get("/api/ping-reserva", async (req, res) => {
   const prueba = {
@@ -255,6 +261,7 @@ router.get('/api/reservas/for-day', async (req, res) => {
         `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
                 COALESCE(r.factura_id, (SELECT id FROM facturas WHERE mesas_mix_id = r.mesas_mix_id ORDER BY id DESC LIMIT 1)) AS factura_id,
                 r.asistencia_confirmada,
+                r.cocina_status,
                 mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
          FROM reservas r
          LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
@@ -267,7 +274,20 @@ router.get('/api/reservas/for-day', async (req, res) => {
     } catch (err) {
       if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column/i.test(err?.message || '')) {
         // Esquema antiguo: sin columnas de horarios -> no hay base para listar por franja
-        return res.json({ ok:true, items: [] });
+        // O sin columna cocina_status: repetir consulta sin esa columna
+        [rows] = await pool.query(
+          `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
+                  COALESCE(r.factura_id, (SELECT id FROM facturas WHERE mesas_mix_id = r.mesas_mix_id ORDER BY id DESC LIMIT 1)) AS factura_id,
+                  r.asistencia_confirmada,
+                  mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
+           FROM reservas r
+           LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+           LEFT JOIN facturas f ON f.id = r.factura_id
+           WHERE r.reserva_inicio IS NOT NULL AND r.reserva_fin IS NOT NULL
+             AND NOT (r.reserva_fin <= ? OR r.reserva_inicio >= ?)
+           ORDER BY r.reserva_inicio ASC`,
+          [start, end]
+        );
       }
       throw err;
     }
@@ -285,6 +305,7 @@ router.get('/api/reservas/for-day', async (req, res) => {
         cliente: r.cliente_nombre || null,
         mesas,
         asistencia_confirmada: (typeof r.asistencia_confirmada === 'number' ? r.asistencia_confirmada : 0),
+        cocina_status: r.cocina_status || 'PENDIENTE',
       };
     });
 
@@ -292,19 +313,35 @@ router.get('/api/reservas/for-day', async (req, res) => {
     if (includeItems && baseItems.length) {
       for (const it of baseItems) {
         try {
-          const facturaId = Number(it.factura_id) || null;
-          if (!facturaId) { it.menu = []; continue; }
-          const [children] = await pool.query('SELECT id FROM facturas WHERE parent_factura_id = ? AND es_extra = 1', [facturaId]);
-          const ids = [facturaId, ...children.map(c => c.id)];
+          // Buscar todas las facturas asociadas a la reserva (por mesas_mix_id y por parent_factura_id)
+          const mixId = it.mesas_mix_id;
+          let facturaIds = [];
+          if (mixId) {
+            // Todas las facturas con ese mesas_mix_id
+            const [facs] = await pool.query('SELECT id FROM facturas WHERE mesas_mix_id = ?', [mixId]);
+            facturaIds = facs.map(f => f.id);
+          }
+          // Además, buscar hijas extra de cada factura encontrada
+          let allFacturaIds = [...facturaIds];
+          if (facturaIds.length) {
+            const [hijas] = await pool.query('SELECT id FROM facturas WHERE parent_factura_id IN (?) AND es_extra = 1', [facturaIds]);
+            allFacturaIds = [...allFacturaIds, ...hijas.map(h => h.id)];
+          }
+          // Si no se encontró nada, usar el factura_id directo
+          if (!allFacturaIds.length && it.factura_id) allFacturaIds = [it.factura_id];
+          if (!allFacturaIds.length) { it.menu = []; continue; }
           // Agregar por item para consolidar cantidades
           const [menuRows] = await pool.query(
-            `SELECT item_type, menu_item_id, nombre, SUM(cantidad) AS cantidad,
-                    CASE WHEN SUM(cantidad) > 0 THEN ROUND(SUM(subtotal)/SUM(cantidad), 2) ELSE MAX(precio_unit) END AS precio_unit
-               FROM detalles_factura
-              WHERE factura_id IN (?)
-              GROUP BY item_type, menu_item_id, nombre
-              ORDER BY MIN(id)`
-            , [ids]
+            `SELECT df.item_type, df.menu_item_id,
+                    COALESCE(NULLIF(TRIM(df.nombre),''), mi.name, 'Sin nombre') AS nombre,
+                    SUM(df.cantidad) AS cantidad,
+                    CASE WHEN SUM(df.cantidad) > 0 THEN ROUND(SUM(df.subtotal)/SUM(df.cantidad), 2) ELSE MAX(df.precio_unit) END AS precio_unit
+               FROM detalles_factura df
+               LEFT JOIN menu_items mi ON df.menu_item_id = mi.id
+              WHERE df.factura_id IN (?)
+              GROUP BY df.item_type, df.menu_item_id, nombre
+              ORDER BY MIN(df.id)`
+            , [allFacturaIds]
           );
           it.menu = menuRows;
         } catch (e) {
@@ -314,6 +351,73 @@ router.get('/api/reservas/for-day', async (req, res) => {
     }
 
     res.json({ ok:true, items: baseItems });
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+// Obtener menú (items agregados) de una reserva consolidando todas las facturas relacionadas
+router.get('/api/reservas/:id/menu', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    console.log('[API] GET /api/reservas/' + id + '/menu');
+    if (!id) return res.status(400).json({ ok:false, message:'id inválido' });
+
+    // Traer mix y factura primaria
+    const [rows] = await pool.query('SELECT mesas_mix_id, factura_id FROM reservas WHERE id = ? LIMIT 1', [id]);
+    if (!rows.length) return res.status(404).json({ ok:false, message:'reserva no encontrada' });
+    const mixId = rows[0].mesas_mix_id || null;
+
+    let facturaIds = [];
+    if (mixId) {
+      const [facs] = await pool.query('SELECT id FROM facturas WHERE mesas_mix_id = ?', [mixId]);
+      facturaIds = facs.map(f => f.id);
+    }
+    if (!facturaIds.length && rows[0].factura_id) facturaIds = [rows[0].factura_id];
+    if (!facturaIds.length) return res.json({ ok:true, items: [] });
+
+    // Añadir hijas extra
+    const [hijas] = await pool.query('SELECT id FROM facturas WHERE parent_factura_id IN (?) AND es_extra = 1', [facturaIds]);
+    const allFacturaIds = [...facturaIds, ...hijas.map(h => h.id)];
+
+    const [menuRows] = await pool.query(
+      `SELECT df.item_type, df.menu_item_id,
+              COALESCE(NULLIF(TRIM(df.nombre),''), mi.name, 'Sin nombre') AS nombre,
+              SUM(df.cantidad) AS cantidad,
+              CASE WHEN SUM(df.cantidad) > 0 THEN ROUND(SUM(df.subtotal)/SUM(df.cantidad), 2) ELSE MAX(df.precio_unit) END AS precio_unit
+         FROM detalles_factura df
+         LEFT JOIN menu_items mi ON df.menu_item_id = mi.id
+        WHERE df.factura_id IN (?)
+        GROUP BY df.item_type, df.menu_item_id, nombre
+        ORDER BY MIN(df.id)`
+      , [allFacturaIds]
+    );
+    console.log('[API] /api/reservas/' + id + '/menu ->', menuRows.length, 'items');
+    return res.json({ ok:true, items: menuRows });
+  } catch (err) {
+    console.error('[API] /api/reservas/:id/menu error:', err);
+    return res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+// Actualizar estado de cocina de una reserva
+// PATCH /api/reservas/:id/kitchen { status: 'PENDIENTE'|'PREPARANDO'|'LISTO' }
+router.patch('/api/reservas/:id/kitchen', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ ok:false, message:'id inválido' });
+    let status = String(req.body?.status || '').toUpperCase();
+    if (!['PENDIENTE','PREPARANDO','LISTO'].includes(status)) status = 'LISTO';
+    try {
+      const [r] = await pool.query('UPDATE reservas SET cocina_status = ?, cocina_updated_at = NOW() WHERE id = ?', [status, id]);
+      if (r.affectedRows === 0) return res.status(404).json({ ok:false, message:'reserva no encontrada' });
+      return res.json({ ok:true, id, cocina_status: status });
+    } catch (err) {
+      if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column/i.test(err?.message || '')) {
+        return res.status(409).json({ ok:false, message:'Falta aplicar migración: 20251030-add-cocina-status-to-reservas.sql' });
+      }
+      throw err;
+    }
   } catch (err) {
     res.status(500).json({ ok:false, message: err.message });
   }
