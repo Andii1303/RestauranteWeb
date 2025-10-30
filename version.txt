@@ -105,3 +105,5 @@ la experiencia de usuario.
 ### Versión 1.6.1.1 (30/10/2025)
 - Panel de mesero:
 	- modificacion de errores en botones de tarjeta de reserva (error actual de agregar alimentos)	
+
+mejora en tarjetas de reserva panel mesero || version 1.6.1.2"
