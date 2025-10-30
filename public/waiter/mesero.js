@@ -299,8 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pEstado.appendChild(badge);
         body.appendChild(pEstado);
         // Acciones: Agregar mesa / Agregar menú
-        const actions = h('div', { className: 'd-flex gap-2 mt-2' });
-        const btnMesa = h('button', { className:'btn btn-sm btn-outline-primary', text:'Agregar mesa' });
+  const actions = h('div', { className: 'd-flex gap-2 mt-2' });
+  const btnMesa = h('button', { className:'btn btn-sm btn-outline-primary', text:'Agregar mesa' });
         btnMesa.addEventListener('click', async () => {
           try {
             // Usar las mesas actuales de la tarjeta (evita 404 si detalle no está disponible)
@@ -322,16 +322,17 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Error al actualizar mesas');
           }
         });
-        const btnMenu = h('button', { className:'btn btn-sm btn-outline-success', text:'Agregar menú' });
+  const btnMenu = h('button', { className:'btn btn-sm btn-outline-success', text:'Agregar menú' });
         btnMenu.addEventListener('click', async () => {
           try {
             let facturaId = it.factura_id;
             if (!facturaId) {
-              // Asegurar factura para esta reserva si aún no existe
-              const ef = await fetch(`/api/reservas/${it.id}/ensure-factura`, { method:'POST' });
-              const jrEf = await ef.json();
-              if (!jrEf?.ok || !jrEf?.factura_id) return alert('No se pudo generar factura para la reserva');
-              facturaId = jrEf.factura_id; it.factura_id = facturaId;
+              // Resolver factura existente (sin crear) por la reserva, enviando contexto para fallback
+              const qs = new URLSearchParams({ inicio: it.inicio || '', fin: it.fin || '', mesas: (it.mesas||[]).join(',') });
+              const rf = await fetch(`/api/reservas/${it.id}/factura?${qs.toString()}`);
+              const jrRf = await rf.json();
+              if (!jrRf?.ok || !jrRf?.factura_id) return alert('No se pudo resolver la factura de la reserva');
+              facturaId = jrRf.factura_id; it.factura_id = facturaId;
             }
             const items = await ensureMenuCache();
             if (!Array.isArray(items) || items.length === 0) return alert('No hay items de menú activos');
@@ -369,6 +370,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btnConfirm.disabled = true;
             btnConfirm.className = 'btn btn-sm btn-secondary';
             btnConfirm.title = notYetWindow ? `Disponible ${ATTENDANCE_EARLY_MIN} min antes del Check-in` : 'La reserva está fuera de horario';
+          }
+          // También desactivar edición de mesas/menú si ya finalizó o pasó la hora fin
+          const disableEdits = String(occ.label).toUpperCase() === 'FINALIZADO' || isPastEnd;
+          if (disableEdits) {
+            btnMesa.disabled = true; btnMenu.disabled = true;
+            btnMesa.className = 'btn btn-sm btn-outline-secondary';
+            btnMenu.className = 'btn btn-sm btn-outline-secondary';
+            btnMesa.title = 'No disponible: la reserva ya finalizó';
+            btnMenu.title = 'No disponible: la reserva ya finalizó';
           }
         } catch {}
         btnConfirm.addEventListener('click', async () => {

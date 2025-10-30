@@ -30,8 +30,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./public:/app/public
-
-  command: ["node", "--watch", "src/server.js"]
+    command: ["node", "--watch", "src/server.js"]
 
   web:
     image: nginx:alpine

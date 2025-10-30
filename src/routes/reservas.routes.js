@@ -176,12 +176,36 @@ router.post('/api/reservas/:id/ensure-factura', async (req, res) => {
     const id = Number(req.params.id);
     if (!id) { conn.release(); return res.status(400).json({ ok:false, message:'id inválido' }); }
     await conn.beginTransaction();
-    const [rows] = await conn.query(
+    let [rows] = await conn.query(
       `SELECT r.id, r.mesa_id, r.mesas_mix_id, r.factura_id, r.reserva_inicio, mm.mesas_csv
        FROM reservas r LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
        WHERE r.id = ? FOR UPDATE`,
       [id]
     );
+    if (!rows.length) {
+      // Fallback: intentar localizar por ventana exacta y mesas_csv si viene en el body
+      const bodyMesas = req.body?.mesas;
+      const inicio = req.body?.reserva_inicio || req.body?.inicio || null;
+      const fin = req.body?.reserva_fin || req.body?.fin || null;
+      let csv = null;
+      if (Array.isArray(bodyMesas)) {
+        const arr = Array.from(new Set(bodyMesas.map(n=>Number(n)).filter(Number.isFinite)));
+        if (arr.length) csv = arr.join(',');
+      } else if (typeof bodyMesas === 'string' && bodyMesas.trim()) {
+        csv = bodyMesas.split(',').map(s=>Number(s.trim())).filter(Number.isFinite).join(',');
+      }
+      if (inicio && fin && csv) {
+        const [alt] = await conn.query(
+          `SELECT r.id, r.mesa_id, r.mesas_mix_id, r.factura_id, r.reserva_inicio, mm.mesas_csv
+           FROM reservas r LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+           WHERE r.reserva_inicio = ? AND r.reserva_fin = ? AND mm.mesas_csv = ? FOR UPDATE`,
+          [inicio, fin, csv]
+        );
+        if (alt.length) {
+          rows = alt; // usar registro encontrado por fallback
+        }
+      }
+    }
     if (!rows.length) { await conn.rollback(); conn.release(); return res.status(404).json({ ok:false, message:'reserva no encontrada' }); }
     const r = rows[0];
     if (r.factura_id) {
@@ -228,7 +252,8 @@ router.get('/api/reservas/for-day', async (req, res) => {
     try {
       [rows] = await pool.query(
         `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
-                r.factura_id, mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
+                COALESCE(r.factura_id, (SELECT id FROM facturas WHERE mesas_mix_id = r.mesas_mix_id ORDER BY id DESC LIMIT 1)) AS factura_id,
+                mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
          FROM reservas r
          LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
          LEFT JOIN facturas f ON f.id = r.factura_id
@@ -272,7 +297,8 @@ router.get('/api/reservas/:id', async (req, res) => {
     if (!id) return res.status(400).json({ ok:false, message:'id inválido' });
     const [rows] = await pool.query(
       `SELECT r.id, r.reserva_inicio, r.reserva_fin, r.status,
-              r.factura_id, mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
+              COALESCE(r.factura_id, (SELECT id FROM facturas WHERE mesas_mix_id = r.mesas_mix_id ORDER BY id DESC LIMIT 1)) AS factura_id,
+              mm.id AS mesas_mix_id, mm.mesas_csv, f.cliente_nombre
        FROM reservas r
        LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
        LEFT JOIN facturas f ON f.id = r.factura_id
@@ -293,6 +319,56 @@ router.get('/api/reservas/:id', async (req, res) => {
       cliente: r.cliente_nombre || null,
       mesas,
     }});
+  } catch (err) {
+    res.status(500).json({ ok:false, message: err.message });
+  }
+});
+
+// Obtener factura vinculada (o resoluble por mesas_mix) para una reserva
+router.get('/api/reservas/:id/factura', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ ok:false, message:'id inválido' });
+    let [rows] = await pool.query('SELECT factura_id, mesas_mix_id FROM reservas WHERE id = ? LIMIT 1', [id]);
+    let facturaId = null;
+    if (rows.length) {
+      const r = rows[0];
+      facturaId = r.factura_id || null;
+      if (!facturaId && r.mesas_mix_id) {
+        const [fx] = await pool.query('SELECT id FROM facturas WHERE mesas_mix_id = ? ORDER BY id DESC LIMIT 1', [r.mesas_mix_id]);
+        if (fx.length) facturaId = fx[0].id;
+      }
+    }
+
+    // Fallback: si no se pudo por id, intentar por (inicio, fin, mesas)
+    if (!facturaId) {
+      const inicio = String(req.query?.inicio || '').trim();
+      const fin = String(req.query?.fin || '').trim();
+      const mesasQ = String(req.query?.mesas || '').trim();
+      if (inicio && fin && mesasQ) {
+        const norm = (csv) => csv.split(',').map(s=>Number(s.trim())).filter(Number.isFinite).sort((a,b)=>a-b).join(',');
+        const targetCsv = norm(mesasQ);
+        const [cands] = await pool.query(
+          `SELECT r.id, r.factura_id, r.mesas_mix_id, mm.mesas_csv
+             FROM reservas r LEFT JOIN mesas_mix mm ON mm.id = r.mesas_mix_id
+            WHERE r.reserva_inicio = ? AND r.reserva_fin = ?`,
+          [inicio, fin]
+        );
+        for (const c of cands) {
+          const csv = norm(String(c.mesas_csv||''));
+          if (csv === targetCsv) {
+            if (c.factura_id) { facturaId = c.factura_id; break; }
+            if (c.mesas_mix_id) {
+              const [fx] = await pool.query('SELECT id FROM facturas WHERE mesas_mix_id = ? ORDER BY id DESC LIMIT 1', [c.mesas_mix_id]);
+              if (fx.length) { facturaId = fx[0].id; break; }
+            }
+          }
+        }
+      }
+    }
+
+    if (!facturaId) return res.status(404).json({ ok:false, message:'factura no encontrada para la reserva' });
+    return res.json({ ok:true, factura_id: facturaId });
   } catch (err) {
     res.status(500).json({ ok:false, message: err.message });
   }
