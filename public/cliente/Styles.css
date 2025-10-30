@@ -1,11 +1,13 @@
 /* === General === */
 body {
+  display: flex;
+  flex-direction: column;
   padding-top: 80px;
   background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
   background-image: url("https://media.istockphoto.com/id/1149011243/es/vector/vector-horizontal-ilustraci%C3%B3n-de-un-fondo-gris-azulado-claro-y-con-textura-grunge.jpg?s=612x612&w=0&k=20&c=y-Z3vFjTdTMbzOBbOWEnzkr_m-2MuZXFxCG62DppP0I=");
   background-repeat: repeat;
   font-family: 'Roboto', sans-serif;
-  font-family: 'Roboto', sans-serif;
+  margin-height: 100%;
 }
 
 h1 {
@@ -276,4 +278,33 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.footer-modern {
+  background: linear-gradient(135deg, #f6b93b, #e55039);
+  color: #fff;
+  border-top: 4px solid #f8c291;
+}
+
+.footer-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin: 0 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #ffeaa7;
+  text-decoration: underline;
+}
+
+.footer-icon {
+  color: #fff;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.footer-icon:hover {
+  color: #ffeaa7;
 }
