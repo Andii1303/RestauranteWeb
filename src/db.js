@@ -15,7 +15,6 @@ const {
 } = process.env;
 
 const sslOption = DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined;
-
 export const pool = SKIP_DB === 'true'
   ? null
   : mysql.createPool({
@@ -207,6 +206,7 @@ export async function ensureReservationSchema() {
   try { await ensureColumn('reservas', 'reserva_inicio', 'reserva_inicio DATETIME NULL'); } catch {}
   try { await ensureColumn('reservas', 'reserva_fin', 'reserva_fin DATETIME NULL'); } catch {}
   try { await ensureColumn('reservas', 'status', "status ENUM('BORRADOR','CONFIRMADA','CANCELADA') NOT NULL DEFAULT 'BORRADOR'"); } catch {}
+  try { await ensureColumn('reservas', 'asistencia_confirmada', 'asistencia_confirmada TINYINT(1) NOT NULL DEFAULT 0'); } catch {}
   // Índices
   try { await ensureIndex('reservas', 'idx_reservas_inicio', '(reserva_inicio)'); } catch {}
   try { await ensureIndex('reservas', 'idx_reservas_fin', '(reserva_fin)'); } catch {}

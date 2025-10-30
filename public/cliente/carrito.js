@@ -1,3 +1,4 @@
+//Selccion de elemtnos DOM
 document.addEventListener('DOMContentLoaded', () => {
   const carritoContenido = document.getElementById('carrito-contenido');
   const vaciarBtn = document.getElementById('vaciar-carrito');
@@ -5,13 +6,52 @@ document.addEventListener('DOMContentLoaded', () => {
   const totalPrecioEl = document.getElementById('total-precio');
   const contComprando = document.getElementById('continuar-comprando');
   const pagarBtn = document.getElementById('pagar-carrito');
+  const cancelarBtn = document.getElementById('cancelar-reserva');
   const tpl = document.getElementById('tpl-carrito-item');
 
+  //inicializacion carrito
   let carrito = { items: {} };
 
+  //redirecionamiento de botones 
   contComprando.addEventListener('click', () => { window.location.href = '/cliente/menu.html'; });
   pagarBtn.addEventListener('click', () => { window.location.href = '/payments/pagar.html'; });
+  cancelarBtn.addEventListener('click', async () => {
+    const proceed = window.confirm('¿Cancelar la reserva actual y eliminar la factura?');
+    if (!proceed) return;
+    const fid = localStorage.getItem('facturaId');
+    try {
+      if (fid) {
+        const resp = await fetch(`/api/facturas/${encodeURIComponent(fid)}`, { method: 'DELETE' });
+        if (!resp.ok) {
+          // Si no se puede borrar (p.ej. ya pagada), intentar marcar CANCELADA como fallback
+          if (resp.status === 409) {
+            try {
+              await fetch('/api/facturas/checkout', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ factura_id: Number(fid), status: 'CANCELADA' })
+              });
+            } catch {}
+          } else {
+            console.warn('No se pudo eliminar la factura, status=', resp.status);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error cancelando factura', err);
+    } finally {
+      // Limpiar estado local y UI
+      try { localStorage.removeItem('facturaId'); } catch {}
+      try { localStorage.removeItem('carritoV2'); } catch {}
+      try { localStorage.removeItem('cartCount'); } catch {}
+      carrito = { items: {} };
+      renderCarrito();
+      CartLib.updateBadge();
+      // Ir al flujo de reservas para iniciar otra
+      window.location.href = '/reserve/reserve.html';
+    }
+  });
 
+  //Funciones de formato y renderizado
   function fmtQ(n){ return Number(n||0).toFixed(2); }
 
   function renderCarrito() {
@@ -27,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Render items carrito
     entries.forEach(([key, producto]) => {
       const node = tpl.content.cloneNode(true);
       const title = node.querySelector('[data-el="title"]');
@@ -42,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
       price.textContent = fmtQ(producto.price);
       subtotal.textContent = fmtQ(Number(producto.price||0) * Number(producto.qty||0));
 
+      // eventos de botones
       incr.addEventListener('click', async () => {
         if (!carrito.items[key]) return;
         carrito.items[key].qty += 1;
@@ -69,10 +111,12 @@ document.addEventListener('DOMContentLoaded', () => {
       carritoContenido.appendChild(node);
     });
 
+    //totales del carrito 
     totalItemsEl.textContent = String(CartLib.count(carrito));
     totalPrecioEl.textContent = 'Q' + CartLib.total(carrito).toFixed(2);
   }
 
+  //vaciar el carrito 
   vaciarBtn.addEventListener('click', async () => {
     const fid = localStorage.getItem('facturaId');
     carrito = await CartLib.clear(fid);
@@ -80,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     CartLib.updateBadge();
   });
 
+  //inicializacion del carrito
   (async () => {
     const fid = localStorage.getItem('facturaId');
     carrito = await CartLib.hydrate(fid);

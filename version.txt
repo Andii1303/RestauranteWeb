@@ -91,8 +91,17 @@ la experiencia de usuario.
 	- Enlace a `formUser.html` usa `window.location.replace(...)` para no dejar rastro en el historial.
 	- `formUser.html` incluye guard de historial (popstate) para evitar volver a `Admin.html#` con la flecha Atrás.
 
-### Versión 1.6.0 (28/10/2025)
+### Versión 1.6.0 (29/10/2025)
 - Panel de mesero: 
 	- listado de reservas del día con filtros de fecha/hora y tarjetas.
 	- Endpoint /api/reservas/for-day para obtener reservas filtradas.
 	- Modularización de código: HTML, JS y CSS separados para el mesero.
+
+### Versión 1.6.1 (29/10/2025)
+- Panel de mesero:
+	- Agregar botones de agregagar mesa, agregar menu (update de reserva)
+	- mejoras en interfaz de tarjeta de reserva
+
+### Versión 1.6.1.1 (30/10/2025)
+- Panel de mesero:
+	- modificacion de errores en botones de tarjeta de reserva (error actual de agregar alimentos)	

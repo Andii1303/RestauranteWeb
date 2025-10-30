@@ -258,4 +258,92 @@ router.delete('/api/facturas/:id/detalles', async (req, res) => {
   }
 });
 
+// Cancelar y eliminar una factura (siempre que no esté pagada). También elimina la reserva vinculada y limpia mesas_mix si queda huérfana.
+router.delete('/api/facturas/:id', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const facturaId = Number(req.params.id);
+    if (!facturaId) return res.status(400).json({ ok:false, message:'factura id inválido' });
+
+    await conn.beginTransaction();
+    const [facs] = await conn.query('SELECT id, status, mesas_mix_id FROM facturas WHERE id = ? LIMIT 1', [facturaId]);
+    if (!facs.length) {
+      await conn.rollback();
+      return res.status(404).json({ ok:false, message:'factura no encontrada' });
+    }
+    const fac = facs[0];
+
+    if (String(fac.status).toUpperCase() === 'PAGADA') {
+      await conn.rollback();
+      return res.status(409).json({ ok:false, message:'no se puede eliminar una factura pagada' });
+    }
+
+    // Borrar detalles y reservas vinculadas
+    await conn.query('DELETE FROM detalles_factura WHERE factura_id = ?', [facturaId]);
+    await conn.query('DELETE FROM reservas WHERE factura_id = ?', [facturaId]);
+    await conn.query('DELETE FROM facturas WHERE id = ?', [facturaId]);
+
+    // Limpiar mesas_mix si no tiene referencias
+    try {
+      const mixId = fac.mesas_mix_id;
+      if (mixId) {
+        const [[{ cnt }]] = await conn.query('SELECT COUNT(*) AS cnt FROM facturas WHERE mesas_mix_id = ?', [mixId]);
+        const [[{ cntR }]] = await conn.query('SELECT COUNT(*) AS cntR FROM reservas WHERE mesas_mix_id = ?', [mixId]);
+        if (Number(cnt) === 0 && Number(cntR) === 0) {
+          await conn.query('DELETE FROM mesas_mix WHERE id = ?', [mixId]);
+        }
+      }
+    } catch {}
+
+    await conn.commit();
+    return res.json({ ok:true, deleted:true });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    return res.status(500).json({ ok:false, message: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 export default router;
+
+// Actualizar las mesas de la factura (vía su mesas_mix)
+// PATCH /api/facturas/:id/mesas { mesas: "1,2,3" | [1,2,3] }
+router.patch('/api/facturas/:id/mesas', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const facturaId = Number(req.params.id);
+    if (!facturaId) { conn.release(); return res.status(400).json({ ok:false, message:'factura id inválido' }); }
+    let mesasIn = req.body?.mesas ?? req.body?.mesas_csv;
+    if (!mesasIn) { conn.release(); return res.status(400).json({ ok:false, message:'mesas requerido' }); }
+    let arr = [];
+    if (Array.isArray(mesasIn)) arr = mesasIn.map(Number).filter(Number.isFinite);
+    else if (typeof mesasIn === 'string') arr = mesasIn.split(',').map(s=>Number(s.trim())).filter(Number.isFinite);
+    arr = Array.from(new Set(arr));
+    if (!arr.length) { conn.release(); return res.status(400).json({ ok:false, message:'lista de mesas vacía' }); }
+
+    await conn.beginTransaction();
+    const [f] = await conn.query('SELECT id, mesas_mix_id FROM facturas WHERE id = ? FOR UPDATE', [facturaId]);
+    if (!f.length) { await conn.rollback(); conn.release(); return res.status(404).json({ ok:false, message:'factura no encontrada' }); }
+    const mixId = f[0].mesas_mix_id;
+    const csv = arr.join(',');
+    if (!mixId) {
+      const [mx] = await conn.query('INSERT INTO mesas_mix (mesas_csv) VALUES (?)', [csv]);
+      await conn.query('UPDATE facturas SET mesas_mix_id = ? WHERE id = ?', [mx.insertId, facturaId]);
+    } else {
+      await conn.query('UPDATE mesas_mix SET mesas_csv = ? WHERE id = ?', [csv, mixId]);
+    }
+    // Propagar a reservas vinculadas (si existen)
+    try {
+      await conn.query('UPDATE reservas SET mesas_mix_id = (SELECT mesas_mix_id FROM facturas WHERE id = ?) WHERE factura_id = ?', [facturaId, facturaId]);
+    } catch {}
+
+    await conn.commit();
+    res.json({ ok:true, mesas: arr, mesas_csv: csv });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ ok:false, message: err.message });
+  } finally {
+    conn.release();
+  }
+});

@@ -5,46 +5,75 @@
   <title>Carrito de Compras</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="./Styles.css">
+  <link rel="stylesheet" href="../cliente/Styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-light">
 
-  <!-- Navbar  -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-  <a class="navbar-brand" href="/cliente/index.html">MiRestaurante</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+<!--navBar-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-3 fixed-top" id="mainNavbar">
+  <div class="container-fluid">
+    <!-- Marca -->
+    <a class="navbar-brand d-flex align-items-center" href="/cliente/index.html">
+      <i class="bi bi-shop-window fs-4 me-2"></i>
+      <span class="fw-bold">MiRestaurante</span>
+    </a>
 
-      <div class="collapse navbar-collapse" id="navbarContenido">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="/cliente/index.html">Inicio</a></li>
-          <li class="nav-item"><a class="nav-link" href="/cliente/menu.html">Comidas</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Reservas</a></li>
-        </ul>
+    <!-- Botón hamburguesa -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido"
+      aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="carrito.html">
-              <i class="fas fa-shopping-cart"></i> Carrito
-              <span id="cart-count" class="badge bg-danger">0</span>
-            </a>
-          </li>
-        </ul>
+    <!-- Contenido colapsable -->
+    <div class="collapse navbar-collapse" id="navbarContenido">
+      <!-- Navegación principal -->
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" href="/cliente/index.html">
+            <i class="bi bi-house-door-fill me-1"></i> Inicio
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/cliente/menu.html">
+            <i class="bi bi-list-ul me-1"></i> Comidas
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/reserve/reserve.html">
+            <i class="bi bi-calendar-check me-1"></i> Reservas
+          </a>
+        </li>
+      </ul>
 
-        <div class="d-flex flex-wrap align-items-center gap-2">
-          <form class="d-flex" role="search">
-            <input class="form-control me-2" type="search" placeholder="Buscar..." aria-label="Buscar">
-            <button class="btn btn-outline-light" type="submit">Buscar</button>
-          </form>
-          <a href="/login/login.html" class="btn btn-outline-light">Iniciar</a>
-          <a href="#" class="btn btn-primary">Unirse</a>
-        </div>
+      <!-- Carrito de compras -->
+      <ul class="navbar-nav me-3">
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/cliente/carrito.html">
+            <i class="bi bi-cart-fill me-1"></i> Carrito
+            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              0
+            </span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Búsqueda y botón de inicio -->
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <!-- Barra de búsqueda con lupa integrada -->
+        <form class="position-relative" role="search">
+          <input class="form-control rounded-pill ps-5" type="search" placeholder="Buscar" aria-label="Buscar">
+          <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        </form>
+
+        <!-- Botón de inicio de sesión -->
+        <a href="/login/login.html" class="btn btn-outline-light rounded-pill">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar
+        </a>
       </div>
     </div>
-  </nav>
+  </div>
+</nav>
 
   <!-- Contenido del carrito -->
   <div class="container py-5">
@@ -75,6 +104,7 @@
 
     <div class="text-center mt-4">
       <button id="vaciar-carrito" class="btn btn-danger">Vaciar Carrito</button>
+      <button id="cancelar-reserva" class="btn btn-outline-warning">Cancelar reserva</button>
       <button id="pagar-carrito" class="btn btn-success">Pagar</button>
       <button id="continuar-comprando" class="btn btn-secondary">Continuar Comprando</button>
     </div>

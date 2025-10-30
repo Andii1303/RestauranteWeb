@@ -1,33 +1,29 @@
+/* Fondo cálido y centrado */
 body {
-      background: linear-gradient(blue, 10%, pink);
-      background-size: cover;                               
-      background-repeat: no-repeat;             
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .login-box {
-      background-color: rgba(243, 240, 224, 0.99);
-      padding: 40px;
-      margin-top: 40px;
-      margin-left: 510px;
-      margin-bottom: 100px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(229, 7, 7, 0.2);
-      width: 100%;
-      max-width: 400px;
-    }
-    .login-box h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #333;
-    }
-    .form-control:focus {
-      box-shadow: none;
-      border-color: #2575fc;
-    }
-    .btn-primary {
-      background-color: #2575fc;
-      border: none;
-    }
-    .btn-primary:hover {
-      background-color: #1a5edb;
-    }
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8c291, #f6b93b, #e55039);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Centrado del contenedor principal */
+.container {
+  flex: 1;
+}
+
+/* Tarjeta del formulario */
+.card {
+  border-radius: 12px;
+  background-color: #fff;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* Animación suave */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

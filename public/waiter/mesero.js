@@ -2,6 +2,23 @@
 let ordenes = JSON.parse(localStorage.getItem('ordenes')) || [];
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Cache simple de menú para agregar items a facturas
+  let MENU_CACHE = [];
+  async function ensureMenuCache() {
+    if (MENU_CACHE.length) return MENU_CACHE;
+    try {
+      const r = await fetch('/api/menu-items');
+      MENU_CACHE = await r.json();
+    } catch (e) {
+      MENU_CACHE = [];
+    }
+    return MENU_CACHE;
+  }
+  function findMenuById(id) {
+    const nid = Number(id);
+    return (MENU_CACHE || []).find(it => Number(it.id) === nid);
+  }
+
   // Helper para crear nodos sin usar innerHTML
   function h(tag, { className, text, attrs } = {}, children = []){
     const el = document.createElement(tag);
@@ -25,16 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('mesas', JSON.stringify(mesas));
   }
 
-  // Seguridad al cambiar de pestaña
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      const confirmExit = confirm('¿Estás seguro que deseas salir de la vista mesero? Esto cerrará tu sesión.');
-        if (confirmExit) {
-          alert('Sesión cerrada. Redirigiendo al inicio...');
-          window.location.href = '/login/login.html';
-      }
-    }
-  });
+  // Nota: No cerrar sesión ni mostrar alertas al cambiar de pestaña/ventana.
+  // La sesión solo se debe cerrar cuando el usuario lo haga explícitamente desde el botón "Cerrar sesión".
 
   // Mostrar sección activa
   window.mostrarSeccion = function (id) {
@@ -215,6 +224,26 @@ document.addEventListener('DOMContentLoaded', () => {
   renderizarMesas();
 
   // --- Reservas del día ---
+  // Configuración: minutos de anticipación para habilitar "Confirmar asistencia"
+  // Puedes cambiarlo en tiempo de ejecución definiendo window.ATTENDANCE_EARLY_MIN
+  const ATTENDANCE_EARLY_MIN = Number(window.ATTENDANCE_EARLY_MIN ?? 5);
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function dtParts(iso){
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return { date:'—', time:'—' };
+    const date = `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
+    const time = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    return { date, time };
+  }
+  function computeEstado(inicioIso, finIso){
+    const now = new Date();
+    const i = new Date(inicioIso);
+    const f = new Date(finIso);
+    if (Number.isNaN(i.getTime()) || Number.isNaN(f.getTime())) return { label:'Reservado', badge:'bg-secondary' };
+    if (now < i) return { label:'Reservado', badge:'bg-warning text-dark' };
+    if (now >= i && now <= f) return { label:'Ocupado', badge:'bg-success' };
+    return { label:'Finalizado', badge:'bg-secondary' };
+  }
   function slots() {
     const a=[]; for (let h=0; h<=23; h++){ for (let m of [0,30]) a.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')); }
     return a;
@@ -253,7 +282,120 @@ document.addEventListener('DOMContentLoaded', () => {
         body.appendChild(h('h6',{className:'card-title', text:`Reserva #${it.id}`}));
         body.appendChild(h('p',{className:'card-text', text:`Cliente: ${it.cliente||'—'}`}));
         body.appendChild(h('p',{className:'card-text', text:`Mesas: ${it.mesas.join(', ')||'—'}`}));
-        body.appendChild(h('p',{className:'card-text', text:`${(it.inicio||'').replace('T',' ')} a ${(it.fin||'').replace('T',' ')}`}));
+        // Estado y tiempos legibles
+        const { date: dateIn, time: timeIn } = dtParts(it.inicio);
+        const { date: dateOut, time: timeOut } = dtParts(it.fin);
+        const { label: occLabel, badge: occBadge } = computeEstado(it.inicio, it.fin);
+        const pFecha = h('p',{className:'card-text mb-1'});
+        pFecha.appendChild(document.createTextNode(`Fecha: ${dateIn}`));
+        body.appendChild(pFecha);
+        const pIn = h('p',{className:'card-text mb-1', text:`Check-in: ${timeIn}`});
+        body.appendChild(pIn);
+        const pOut = h('p',{className:'card-text mb-2', text:`Check-out: ${timeOut}`});
+        body.appendChild(pOut);
+        const pEstado = h('p',{className:'card-text'});
+        const badge = h('span',{className:`badge ${occBadge}`, text:occLabel});
+        pEstado.appendChild(document.createTextNode('Estado: '));
+        pEstado.appendChild(badge);
+        body.appendChild(pEstado);
+        // Acciones: Agregar mesa / Agregar menú
+  const actions = h('div', { className: 'd-flex gap-2 mt-2' });
+  const btnMesa = h('button', { className:'btn btn-sm btn-outline-primary', text:'Agregar mesa' });
+        btnMesa.addEventListener('click', async () => {
+          try {
+            // Usar las mesas actuales de la tarjeta (evita 404 si detalle no está disponible)
+            const actuales = (it.mesas || []).map(x=>Number(x)).filter(Number.isFinite);
+            const input = prompt(`Ingresa IDs de mesas a agregar (separadas por coma). Actual: ${actuales.join(', ')}`, '');
+            if (input == null) return; // cancel
+            const nuevos = input.split(',').map(s=>Number(s.trim())).filter(n=>Number.isFinite(n));
+            if (!nuevos.length) return alert('No se especificaron mesas');
+            const merged = Array.from(new Set([...actuales.map(Number).filter(Number.isFinite), ...nuevos]));
+            let resp = await fetch(`/api/reservas/${it.id}/mesas`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesas: merged })});
+            if (!resp.ok && resp.status === 404 && it.factura_id) {
+              // Fallback por factura si la reserva no existe
+              resp = await fetch(`/api/facturas/${it.factura_id}/mesas`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesas: merged })});
+            }
+            const jr = await resp.json().catch(()=>({ ok:false }));
+            if (!resp.ok || !jr?.ok) return alert(jr?.message || 'No se pudo actualizar mesas');
+            await fetchReservas();
+          } catch (e) {
+            alert('Error al actualizar mesas');
+          }
+        });
+  const btnMenu = h('button', { className:'btn btn-sm btn-outline-success', text:'Agregar menú' });
+        btnMenu.addEventListener('click', async () => {
+          try {
+            let facturaId = it.factura_id;
+            if (!facturaId) {
+              // Resolver factura existente (sin crear) por la reserva, enviando contexto para fallback
+              const qs = new URLSearchParams({ inicio: it.inicio || '', fin: it.fin || '', mesas: (it.mesas||[]).join(',') });
+              const rf = await fetch(`/api/reservas/${it.id}/factura?${qs.toString()}`);
+              const jrRf = await rf.json();
+              if (!jrRf?.ok || !jrRf?.factura_id) return alert('No se pudo resolver la factura de la reserva');
+              facturaId = jrRf.factura_id; it.factura_id = facturaId;
+            }
+            const items = await ensureMenuCache();
+            if (!Array.isArray(items) || items.length === 0) return alert('No hay items de menú activos');
+            const preview = items.slice(0, 8).map(x=>`#${x.id} ${x.name} - S/ ${x.price}`).join('\n');
+            alert('Opciones (primeros):\n' + preview + (items.length>8 ? '\n…' : ''));
+            const idStr = prompt('ID del menú a agregar:');
+            if (idStr == null) return;
+            const itSel = findMenuById(idStr);
+            if (!itSel) return alert('ID inválido');
+            const qtyStr = prompt(`Cantidad para "${itSel.name}" (precio S/ ${itSel.price})`, '1');
+            if (qtyStr == null) return;
+            const cantidad = Math.max(1, Number(qtyStr)|0);
+            const payload = { menu_item_id: itSel.id, nombre: itSel.name, cantidad, precio_unit: Number(itSel.price)||0, item_type: itSel.type||'PLATO' };
+            const r = await fetch(`/api/facturas/${facturaId}/detalles`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            const jr = await r.json();
+            if (!jr?.ok && jr?.total == null) return alert(jr?.message || 'No se pudo agregar item');
+            alert('Ítem agregado a la factura');
+          } catch (e) {
+            alert('Error al agregar ítem');
+          }
+        });
+        // Confirmar asistencia
+        const btnConfirm = h('button', { className:'btn btn-sm btn-primary', text:'Confirmar asistencia' });
+        // Desactivar si la reserva llegó a su hora fin, está finalizada,
+        // o aún falta más de ATTENDANCE_EARLY_MIN minutos para el inicio
+        try {
+          const occ = computeEstado(it.inicio, it.fin);
+          const finDate = new Date(it.fin);
+          const iniDate = new Date(it.inicio);
+          const isPastEnd = !Number.isNaN(finDate.getTime()) && (new Date() >= finDate);
+          const msEarly = ATTENDANCE_EARLY_MIN * 60 * 1000;
+          const notYetWindow = !Number.isNaN(iniDate.getTime()) && (new Date() < new Date(iniDate.getTime() - msEarly));
+          const shouldDisable = String(occ.label).toUpperCase() === 'FINALIZADO' || isPastEnd || notYetWindow;
+          if (shouldDisable) {
+            btnConfirm.disabled = true;
+            btnConfirm.className = 'btn btn-sm btn-secondary';
+            btnConfirm.title = notYetWindow ? `Disponible ${ATTENDANCE_EARLY_MIN} min antes del Check-in` : 'La reserva está fuera de horario';
+          }
+          // También desactivar edición de mesas/menú si ya finalizó o pasó la hora fin
+          const disableEdits = String(occ.label).toUpperCase() === 'FINALIZADO' || isPastEnd;
+          if (disableEdits) {
+            btnMesa.disabled = true; btnMenu.disabled = true;
+            btnMesa.className = 'btn btn-sm btn-outline-secondary';
+            btnMenu.className = 'btn btn-sm btn-outline-secondary';
+            btnMesa.title = 'No disponible: la reserva ya finalizó';
+            btnMenu.title = 'No disponible: la reserva ya finalizó';
+          }
+        } catch {}
+        btnConfirm.addEventListener('click', async () => {
+          try {
+            let r = await fetch(`/api/reservas/${it.id}/attendance`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ attended: true }) });
+            if (!r.ok && r.status === 404 && it.factura_id) {
+              r = await fetch(`/api/reservas/by-factura/${it.factura_id}/attendance`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ attended: true }) });
+            }
+            const jr = await r.json().catch(()=>({ ok:false }));
+            if (!r.ok || !jr?.ok) return alert(jr?.message || 'No se pudo confirmar asistencia');
+            await fetchReservas();
+          } catch(e) {
+            alert('Error al confirmar asistencia');
+          }
+        });
+        actions.appendChild(btnMesa); actions.appendChild(btnMenu); actions.appendChild(btnConfirm);
+        body.appendChild(actions);
         card.appendChild(body); col.appendChild(card); cont.appendChild(col);
       });
     }catch(e){
@@ -261,6 +403,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   document.getElementById('w-filtrar')?.addEventListener('click', fetchReservas);
+
+  // Botón explícito de Cerrar sesión
+  const btnLogout = document.getElementById('btnCerrarSesion');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+      window.location.href = '/login/login.html';
+    });
+  }
 });
 
 // Renderizar órdenes

@@ -2,3 +2,4 @@
 // Mantenerlo garantiza compatibilidad con configuraciones antiguas que todavía
 // ejecuten `node src/index.js` (por ejemplo, en Render si quedó el Start Command).
 import './server.js';
+
