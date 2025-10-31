@@ -1,3 +1,18 @@
+/**
+ * Panel Mesero (frontend)
+ *
+ * Qué hace:
+ * - Secciones: vista de mesas, reservas por franja, y órdenes locales simples.
+ * - Interactúa con APIs: /api/mesas y /api/reservas/for-day.
+ * - Permite agregar menú a una factura y redirigir a pagos.
+ *
+ * Secciones del archivo:
+ * 1) Estado local y helpers DOM
+ * 2) Carga de menú (caché) y utilidades de tiempo
+ * 3) Navegación de secciones
+ * 4) Vistas: Mesas, Órdenes, Reservas
+ * 5) Bootstrap y eventos
+ */
 // Estado local simple (para secciones no críticas)
 let ordenes = JSON.parse(localStorage.getItem('ordenes')) || [];
 let mesasLocal = JSON.parse(localStorage.getItem('mesas')) || Array.from({ length: 10 }, (_, i) => ({

@@ -1,3 +1,9 @@
+/**
+ * Helper: parsear respuesta de procedimientos almacenados (MySQL)
+ *
+ * Convierte la estructura de salida de `CALL sp_*` en un objeto más simple
+ * con propiedades útiles: { ok, message, data }.
+ */
 export function parseMySqlSpResponse(results) {
   const sets = Array.isArray(results) ? results : [];
   const flat = sets.flatMap((rs) => (Array.isArray(rs) ? rs : []));

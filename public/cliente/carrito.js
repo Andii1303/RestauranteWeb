@@ -1,3 +1,9 @@
+/**
+ * Carrito (frontend)
+ *
+ * - Renderiza el contenido del carrito local y permite modificar/confirmar.
+ * - Se apoya en CartLib para operaciones comunes.
+ */
 //Selccion de elemtnos DOM
 document.addEventListener('DOMContentLoaded', () => {
   const carritoContenido = document.getElementById('carrito-contenido');

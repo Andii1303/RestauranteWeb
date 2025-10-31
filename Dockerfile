@@ -1,3 +1,8 @@
+# Dockerfile
+#
+# Imagen de Node para producir y ejecutar el backend.
+# Etapas posibles: build (si se requiere transpilar) y runtime.
+# Este proyecto usa ES Modules y no requiere build; instalamos deps y arrancamos.
 FROM node:20-alpine
 
 WORKDIR /app

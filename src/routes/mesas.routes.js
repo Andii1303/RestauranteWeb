@@ -1,3 +1,11 @@
+/**
+ * Mesas (rutas)
+ *
+ * Funciones típicas:
+ * - CRUD de mesas (nombre/ID, capacidad, activa).
+ * - Listado para vista de mesero.
+ * - Vinculación con `mesas_mix` para reservas/facturas.
+ */
 import { Router } from 'express';
 import { pool } from '../db.js';
 

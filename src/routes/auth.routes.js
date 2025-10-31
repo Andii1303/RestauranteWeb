@@ -1,3 +1,15 @@
+/**
+ * Autenticación (rutas)
+ *
+ * Endpoints esperados:
+ * - POST /auth/login: valida credenciales, retorna datos del usuario (incl. rol).
+ * - POST /auth/logout: invalida sesión/token (según implementación del server).
+ * - GET  /auth/me (opcional): devuelve usuario actual si hay sesión válida.
+ *
+ * Notas:
+ * - Este router se monta en `src/server.js`.
+ * - Usa cookies/JWT según configuración del servidor.
+ */
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { pool } from "../db.js";

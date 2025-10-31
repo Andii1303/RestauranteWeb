@@ -1,3 +1,10 @@
+/**
+ * Middleware de autenticación/autorización
+ *
+ * - Verifica token/cookie y adjunta `req.user`.
+ * - `requireRole(...roles)`: restringe acceso por rol.
+ * - Debe importarse y usarse en routers protegidos.
+ */
 import jwt from "jsonwebtoken";
 
 const { JWT_SECRET = "dev_secret_change_me" } = process.env;

@@ -1,3 +1,9 @@
+/**
+ * Página de inicio (efectos y render demo)
+ *
+ * - Anima y pinta tarjetas demo si existe window.platos.
+ * - Efectos de scroll para navbar.
+ */
 // Datos de ejemplo para los platos del menú
 
 document.addEventListener("DOMContentLoaded", () => {

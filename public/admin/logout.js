@@ -1,3 +1,8 @@
+/**
+ * Admin: Logout (frontend)
+ *
+ * - Envía POST a /auth/logout y redirige a pantalla de login.
+ */
 document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {

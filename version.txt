@@ -1,3 +1,5 @@
+Archivo de versión y notas de cambios.
+Usar para documentar versiones y cambios relevantes del proyecto.
 # Proyecto Restaurante - Archivo de Versiones
 ### Criterio de versionado:
 - Se utiliza el esquema SemVer (Mayor.Menor.Patch).
