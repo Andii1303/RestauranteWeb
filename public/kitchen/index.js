@@ -1,3 +1,13 @@
+/**
+ * Vista de Cocina (frontend)
+ *
+ * Resumen:
+ * - Lista reservas del día con sus pedidos consolidados (factura + extras).
+ * - Permite cambiar el estado de cocina (PENDIENTE, PREPARANDO, LISTO).
+ * - Estructura: inicialización, helpers, carga de reservas, carga de menú por reserva.
+ */
+
+// Bootstrap de la vista
 document.addEventListener('DOMContentLoaded', () => {
   initReservasUI();
 });
@@ -7,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // (Limpieza) Se removieron bloques comentados sin uso
 
 // === Reservas: listado del día y verificación de asistencia ===
+// Inicializa filtros, listeners y dispara la carga del listado del día
 function initReservasUI() {
   const inputFecha = document.getElementById('res-fecha');
   const btnBuscar = document.getElementById('res-buscar');
@@ -34,6 +45,7 @@ function initReservasUI() {
   btnBuscar.addEventListener('click', () => cargarReservasDelDia());
   cargarReservasDelDia();
 
+  // Consulta /api/reservas/for-day e imprime tarjetas para cada reserva
   async function cargarReservasDelDia() {
     cont.textContent = '';
     const fecha = inputFecha.value;
@@ -53,7 +65,8 @@ function initReservasUI() {
       }
       // usar helper h definido arriba
 
-      items.forEach(rv => {
+  // Render de tarjeta por reserva
+  items.forEach(rv => {
         const col = h('div', { className: 'col-md-6' });
         const card = h('div', { className: 'card shadow-sm' });
         const body = h('div', { className: 'card-body' });
@@ -67,7 +80,7 @@ function initReservasUI() {
         const color = st === 'LISTO' ? 'success' : (st === 'PREPARANDO' ? 'info' : 'warning');
         const badgeSt = h('span', { className: `badge text-bg-${color} mb-2 me-2`, text: `Cocina: ${st}` });
 
-        // Lista de menú solicitado (agregado de factura principal + extras hija)
+  // Lista de menú solicitado (agregado de factura principal + extras hija)
         const menuTitle = h('h6', { className: 'mt-2', text: 'Pedido (menú):' });
         const ul = h('ul', { className: 'mb-3' });
         ul.appendChild(h('li', { className: 'text-muted', text: 'Cargando…' }));
@@ -77,7 +90,7 @@ function initReservasUI() {
           ul.appendChild(h('li', { className: 'text-muted', text: 'Sin items registrados.' }));
         });
         const actions = h('div', { className: 'd-flex gap-2 align-items-center' });
-        const btnDone = h('button', { className: 'btn btn-sm btn-outline-success', text: 'Terminado' });
+  const btnDone = h('button', { className: 'btn btn-sm btn-outline-success', text: 'Terminado' }); // LISTO
         const btnPrep = h('button', { className: 'btn btn-sm btn-outline-primary', text: 'Preparando' });
         if (st === 'LISTO') { btnDone.disabled = true; card.classList.add('border-success','opacity-75'); }
         btnPrep.addEventListener('click', async () => {
@@ -132,6 +145,7 @@ function initReservasUI() {
     }
   }
 
+  // Formateo simple de hora local HH:MM desde ISO/string
   function fmtHora(s) {
     if (!s) return '—';
     const d = new Date(s);
@@ -140,6 +154,7 @@ function initReservasUI() {
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  // Trae items consolidados de una reserva y los plasma en un <ul>
   async function cargarMenuReserva(reservaId, ulEl){
     try {
       const r = await fetch(`/api/reservas/${reservaId}/menu`);

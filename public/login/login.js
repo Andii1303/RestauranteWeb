@@ -1,8 +1,18 @@
+/**
+ * Login (frontend)
+ *
+ * Flujo:
+ * - Envía email/password a /auth/login.
+ * - Muestra errores en caja o alert si no hay caja.
+ * - Redirige según rol devuelto por el backend.
+ */
+
 console.log('[login.js] Script cargado');
 
 const form = document.getElementById('loginForm');
 const errorBox = document.getElementById('loginError');
 
+// Muestra error en caja visual o en alert si no existe
 function showError(msg){
 	if (errorBox){
 		errorBox.textContent = msg || 'Correo o contraseña incorrectos';
@@ -12,6 +22,7 @@ function showError(msg){
 	}
 }
 
+// Redirige según rol entregado por backend
 function redirectByRole(role){
 	console.log('[login.js] redirectByRole:', role);
 	if (role === 'ADMIN') { console.log('[login.js] -> /admin/Admin.html'); return window.location.replace('/admin/Admin.html'); }

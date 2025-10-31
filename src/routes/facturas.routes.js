@@ -1,3 +1,17 @@
+/**
+ * Rutas de facturación
+ *
+ * Qué expone:
+ * - Crear factura en borrador desde mesas (por nombre o ID).
+ * - Agregar/eliminar/actualizar detalles de factura (ítems de menú y productos).
+ * - Consolidación de totales, manejo de extras (facturas hijas), pagado por detalle.
+ * - Resolución de facturas vinculadas a reservas (mesas_mix, reserva_hora).
+ * - Endpoints utilitarios (health, vaciar detalles, etc.).
+ *
+ * Notas:
+ * - Usa `pool` (mysql2/promise) para consultas SQL.
+ * - Maneja esquemas nuevos y antiguos con fallbacks (ej. columnas faltantes).
+ */
 import { Router } from 'express';
 import { pool } from '../db.js';
 

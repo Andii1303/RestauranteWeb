@@ -1,9 +1,15 @@
-// Cart library: unified logic for local and server-backed carts
-// API contract:
-// - If facturaId is present: server is source of truth; always sync to server and hydrate from it.
-// - If no facturaId: use localStorage only.
+/**
+ * Biblioteca de carrito (frontend)
+ *
+ * Contrato:
+ * - Con facturaId: el backend es la fuente de verdad; se sincroniza y se hidrata desde el servidor.
+ * - Sin facturaId: se usa solo localStorage (modo offline/local).
+ *
+ * API expuesta: { hydrate, sync, addItem, clear, updateBadge, count, total }
+ */
 
 const CartLib = (() => {
+  // Lee el carrito desde localStorage; migra formato antiguo (array) a { items:{} }
   function _readLocal() {
     try {
       const raw = localStorage.getItem('carritoV2') || localStorage.getItem('carrito');
@@ -26,19 +32,23 @@ const CartLib = (() => {
     }
   }
 
+  // Persiste el carrito y actualiza contador total
   function _saveLocal(cart) {
     localStorage.setItem('carritoV2', JSON.stringify(cart));
     localStorage.setItem('cartCount', String(count(cart)));
   }
 
+  // Total de unidades
   function count(cart) {
     return Object.values(cart.items || {}).reduce((a, it) => a + (Number(it.qty)||0), 0);
   }
 
+  // Total monetario
   function total(cart) {
     return Object.values(cart.items || {}).reduce((a, it) => a + ((Number(it.qty)||0) * (Number(it.price)||0)), 0);
   }
 
+  // Reconstruye carrito: si hay factura, trae detalles del backend; si no, usa local
   async function hydrate(facturaId) {
     if (!facturaId) return _readLocal();
     try {
@@ -69,6 +79,7 @@ const CartLib = (() => {
     }
   }
 
+  // Sincroniza estado del carrito con backend cuando hay facturaId
   async function sync(facturaId, cart) {
     if (!facturaId) { _saveLocal(cart); return cart; }
     const itemsArr = Object.values(cart.items || {}).map(it => ({
@@ -88,6 +99,7 @@ const CartLib = (() => {
     return cart;
   }
 
+  // Agrega 1 unidad al carrito (local o en backend según facturaId)
   async function addItem(facturaId, item) {
     // item: { id, name, price, type }
     if (!facturaId) {
@@ -113,6 +125,7 @@ const CartLib = (() => {
     return await hydrate(facturaId);
   }
 
+  // Vacía carrito local y, si aplica, borra detalles en backend
   async function clear(facturaId) {
     if (facturaId) {
       try { await fetch(`/api/facturas/${encodeURIComponent(facturaId)}/detalles`, { method: 'DELETE' }); } catch {}
@@ -122,6 +135,7 @@ const CartLib = (() => {
     return empty;
   }
 
+  // Actualiza badge numérico del carrito en la UI
   function updateBadge() {
     const el = document.getElementById('cart-count');
     if (!el) return;
