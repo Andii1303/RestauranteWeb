@@ -2,8 +2,10 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const menuGrid = document.getElementById("home-menu-grid");
+  const lista = Array.isArray(window.platos) ? window.platos : null;
+  if (!menuGrid || !lista) return; // si no hay datos, salir silenciosamente
 
-  platos.forEach((plato, index) => {
+  lista.forEach((plato, index) => {
     const col = document.createElement("div");
     col.className = "col animate-fade-in";
 

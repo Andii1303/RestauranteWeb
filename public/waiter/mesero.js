@@ -177,7 +177,7 @@ async function fetchReservas() {
           alert('Opciones (primeros):\n' + preview + (items.length > 8 ? '\n…' : ''));
           const idStr = prompt('ID del menú a agregar:'); if (idStr == null) return;
           const itSel = findMenuById(idStr); if (!itSel) return alert('ID inválido');
-          const qtyStr = prompt(`Cantidad para \"${itSel.name}\" (precio S/ ${itSel.price})`, '1'); if (qtyStr == null) return;
+          const qtyStr = prompt(`Cantidad para "${itSel.name}" (precio S/ ${itSel.price})`, '1'); if (qtyStr == null) return;
           const cantidad = Math.max(1, Number(qtyStr) | 0);
           // Marcar como extra en el payload
           const payload = { menu_item_id: itSel.id, nombre: itSel.name, cantidad, precio_unit: Number(itSel.price) || 0, item_type: itSel.type || 'PLATO', extra: true };

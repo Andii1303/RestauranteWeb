@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+public/**/*.html
+public/**/*.css
+public/**/*.avif
+public/**/*.png
+public/**/*.jpg
+public/**/*.svg

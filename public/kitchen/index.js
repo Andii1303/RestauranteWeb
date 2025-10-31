@@ -13,6 +13,16 @@ function initReservasUI() {
   const cont = document.getElementById('lista-reservas');
   if (!inputFecha || !btnBuscar || !cont) return;
 
+  // Helper para crear nodos rápidamente
+  const h = (tag, { className, text, attrs } = {}, children = []) => {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text != null) el.textContent = text;
+    if (attrs) Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, String(v)));
+    (Array.isArray(children) ? children : [children]).forEach(ch => { if (ch) el.appendChild(ch); });
+    return el;
+  };
+
   // Default: hoy
   const hoy = new Date();
   const pad = n => String(n).padStart(2, '0');
@@ -41,14 +51,7 @@ function initReservasUI() {
         cont.appendChild(p);
         return;
       }
-      const h = (tag, { className, text, attrs } = {}, children = []) => {
-        const el = document.createElement(tag);
-        if (className) el.className = className;
-        if (text != null) el.textContent = text;
-        if (attrs) Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, String(v)));
-        (Array.isArray(children) ? children : [children]).forEach(ch => { if (ch) el.appendChild(ch); });
-        return el;
-      };
+      // usar helper h definido arriba
 
       items.forEach(rv => {
         const col = h('div', { className: 'col-md-6' });

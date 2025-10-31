@@ -116,11 +116,7 @@ router.post("/api/reservas", async (req, res) => {
   res.status(result.status).json(result.body);
 });
 
-// Stub opcional para compatibilidad con UI antigua de cocina
-// GET /api/ordenes -> retorna [] para evitar 404 si la vista intenta cargarlo
-router.get('/api/ordenes', async (_req, res) => {
-  return res.json([]);
-});
+// Nota: endpoint legacy /api/ordenes eliminado; la UI de cocina usa /api/reservas/:id/menu.
 
 // GET /api/ping-reserva (payload de prueba)
 router.get("/api/ping-reserva", async (req, res) => {

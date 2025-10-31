@@ -1,3 +1,4 @@
+/* global mostrarSeccion */
 // Helpers de UI
 function toast(msg, type = 'info') {
   alert(msg); // simple por ahora
