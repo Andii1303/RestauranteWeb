@@ -1,3 +1,10 @@
+/**
+ * Admin: Gestión de Menú (frontend)
+ *
+ * - Mantenimiento de items: crear/editar disponibilidad y precio.
+ * - Render de tablas y modales.
+ * - Interacción con /api/menu-items (y variantes internas).
+ */
 function toast(msg) { alert(msg); }
 
 async function listarPlatos() {

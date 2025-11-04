@@ -1,3 +1,17 @@
+/**
+ * Pagos (frontend)
+ *
+ * Qué hace:
+ * - Modo carrito normal: resume items guardados en localStorage y procesa pago.
+ * - Modo factura: si llega `factura_id`, carga detalles desde backend y permite pagar total o extras.
+ * - Alterna UI de método de pago (tarjeta/efectivo) y redirige a confirmación.
+ *
+ * Estructura:
+ * - Utils: formato de moneda, query params.
+ * - Estado global de factura.
+ * - Carga y render de resumen (carrito o factura).
+ * - Envío de pago (checkout) al backend.
+ */
 
 function fmtQ(v){ return 'Q' + Number(v||0).toFixed(2); }
 

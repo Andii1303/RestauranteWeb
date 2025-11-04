@@ -1,3 +1,9 @@
+/**
+ * Admin: Formulario de Usuario (frontend)
+ *
+ * - Maneja creación/edición de usuarios.
+ * - Valida campos y envía datos a endpoints de usuarios.
+ */
 // Evitar volver a Admin.html con el botón atrás (neutraliza historial reciente)
 (function preventBackToAdmin(){
 	try { history.replaceState(null, document.title, location.href); } catch {}

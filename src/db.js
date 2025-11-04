@@ -1,3 +1,17 @@
+/**
+ * Conexión y utilidades de base de datos (MySQL2/promise)
+ *
+ * Resumen:
+ * - Lee configuración desde variables de entorno.
+ * - Crea un pool de conexiones (o lo omite si SKIP_DB=true).
+ * - Expone un helper `ping()` para chequeo de salud.
+ *
+ * Secciones:
+ * 1) Carga de dependencias y variables de entorno.
+ * 2) Construcción de opciones (SSL opcional).
+ * 3) Creación del pool con límites de conexión.
+ * 4) Helper de ping (SELECT 1).
+ */
 // Conexión a MySQL para el backend
 
 import mysql from "mysql2/promise";
@@ -15,7 +29,6 @@ const {
 } = process.env;
 
 const sslOption = DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined;
-
 export const pool = SKIP_DB === 'true'
   ? null
   : mysql.createPool({

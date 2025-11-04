@@ -1,3 +1,8 @@
+/**
+ * Admin: Usuarios (frontend)
+ *
+ * - Listado y mantenimiento de usuarios del sistema.
+ */
 // Gestión de usuarios (panel admin)
 // Esta versión es un placeholder. En pasos siguientes se conectará con /roles y /users del backend.
 let usuarios = [];

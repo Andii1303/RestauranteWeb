@@ -1,3 +1,11 @@
+/**
+ * Admin: Gestión de Ingredientes (frontend)
+ *
+ * - Carga de unidades y listado de ingredientes.
+ * - CRUD de ingredientes y actualización de stock por ingresos.
+ * - Render de tablas, formularios y acciones.
+ */
+/* global mostrarSeccion */
 // Helpers de UI
 function toast(msg, type = 'info') {
   alert(msg); // simple por ahora

@@ -1,3 +1,7 @@
+# docker-compose.yml
+#
+# Orquesta servicios locales: app (backend) y db (MySQL),
+# con variables de entorno y volúmenes para desarrollo.
 services:
   db:
     image: mysql:8.0
@@ -26,7 +30,6 @@ services:
       - db
     ports:
       - "4000:4000"
-  
     volumes:
       - ./src:/app/src
       - ./public:/app/public

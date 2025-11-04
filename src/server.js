@@ -1,3 +1,23 @@
+/**
+ * Backend HTTP server (Express)
+ *
+ * Qué hace este archivo (resumen):
+ * - Configura middlewares globales (CORS, JSON, cookies).
+ * - Verifica y prepara autenticación básica (tabla app_users y admin por defecto).
+ * - Espera la disponibilidad de la base de datos antes de iniciar.
+ * - Monta los routers de dominio (auth, reservas, usuarios, ingredientes, menú, facturas, mesas).
+ * - Sirve los archivos estáticos del frontend desde /public.
+ * - Arranca el servidor HTTP en el puerto/host configurados.
+ *
+ * Estructura de secciones:
+ * 1) Imports y utilidades de ruta (__dirname)
+ * 2) Inicialización de app y middlewares
+ * 3) Setup de autenticación (ensureAuthSetup)
+ * 4) Espera activa de DB (waitForDatabase)
+ * 5) Rutas y routers (REST APIs)
+ * 6) Servir frontend estático
+ * 7) Bootstrap de arranque (main)
+ */
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';

@@ -1,10 +1,10 @@
 /**
- * Admin: Logout (frontend)
+ * Cocinero: Logout (frontend)
  *
  * - Envía POST a /auth/logout y redirige a pantalla de login.
  */
 document.addEventListener('DOMContentLoaded', () => {
-  const logoutBtn = document.getElementById('logoutBtn');
+  const logoutBtn = document.getElementById('btnCerrarSesion');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
       try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}

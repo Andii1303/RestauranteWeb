@@ -1,3 +1,15 @@
+/**
+ * Usuarios (rutas)
+ *
+ * Ejemplos de endpoints (dependiendo de implementación actual):
+ * - GET    /api/users           -> listar usuarios
+ * - POST   /api/users           -> crear usuario
+ * - PUT    /api/users/:id       -> actualizar usuario
+ * - DELETE /api/users/:id       -> desactivar/eliminar usuario
+ *
+ * Notas:
+ * - Requiere middleware de autenticación/roles en `src/middleware/auth.js`.
+ */
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { pool } from '../db.js';

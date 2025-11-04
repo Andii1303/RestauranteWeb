@@ -1,3 +1,9 @@
+/**
+ * Reserva (frontend)
+ *
+ * - Maneja formulario para crear reserva con selección de mesas y horarios.
+ * - Interactúa con /api/reservas para crear y validar.
+ */
 // Helper para generar horarios HH:MM en intervalos de 30'
 function buildSlots(startH = 8, endH = 22) {
 	const slots = [];

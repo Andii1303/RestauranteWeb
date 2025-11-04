@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  Vista Cocinero
+  - Lista reservas del día y muestra el pedido consolidado.
+  - Permite marcar estado de cocina: PREPARANDO o LISTO.
+  - Script asociado: kitchen/index.js
+-->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -9,7 +15,7 @@
 </head>
 <body>
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNavBar">
   <div class="container-fluid">
   <a class="navbar-brand" href="/cliente/index.html">MiRestaurante</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido" aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,6 +70,7 @@
   </div>
 
   <script src="index.js"></script>
+  <script src="logout.js"></script>
 </body>
 <footer class="bg-dark text-white pt-4 pb-2 mt-5">
   <div class="container">

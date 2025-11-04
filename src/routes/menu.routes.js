@@ -1,3 +1,11 @@
+/**
+ * Menú (rutas)
+ *
+ * Responsabilidades:
+ * - CRUD de ítems de menú (platos/productos), disponibilidad y precio.
+ * - Listado público (solo disponibles) para clientes.
+ * - Listado completo (incluye no disponibles) para administración/mesero.
+ */
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';

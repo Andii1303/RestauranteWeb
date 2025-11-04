@@ -1,3 +1,17 @@
+/**
+ * Rutas de facturación
+ *
+ * Qué expone:
+ * - Crear factura en borrador desde mesas (por nombre o ID).
+ * - Agregar/eliminar/actualizar detalles de factura (ítems de menú y productos).
+ * - Consolidación de totales, manejo de extras (facturas hijas), pagado por detalle.
+ * - Resolución de facturas vinculadas a reservas (mesas_mix, reserva_hora).
+ * - Endpoints utilitarios (health, vaciar detalles, etc.).
+ *
+ * Notas:
+ * - Usa `pool` (mysql2/promise) para consultas SQL.
+ * - Maneja esquemas nuevos y antiguos con fallbacks (ej. columnas faltantes).
+ */
 import { Router } from 'express';
 import { pool } from '../db.js';
 
@@ -249,16 +263,36 @@ router.post('/api/facturas/checkout', async (req, res) => {
       // Marcar como pagados los detalles que coincidan con los items recibidos
       for (const it of items) {
         // Siempre matchear por factura, menu_item_id y nombre para cubrir cantidades agregadas
-        await conn.query(
-          'UPDATE detalles_factura SET pagado=1 WHERE factura_id=? AND (menu_item_id <=> ?) AND nombre=? AND pagado=0',
-          [facturaId, (it.menu_item_id ?? null), it.nombre || 'Item']
-        );
+        try {
+          await conn.query(
+            'UPDATE detalles_factura SET pagado=1 WHERE factura_id=? AND (menu_item_id <=> ?) AND nombre=? AND pagado=0',
+            [facturaId, (it.menu_item_id ?? null), it.nombre || 'Item']
+          );
+        } catch (err) {
+          // Fallback si la columna pagado todavía no existe en producción
+          if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column 'pagado'/i.test(err?.message || '')) {
+            console.warn('Checkout: columna `pagado` no existe aún. Continuando sin marcar pagado.');
+          } else {
+            throw err;
+          }
+        }
       }
     }
 
     // Recalcular total y actualizar status
     const [[{ total }]] = await conn.query('SELECT IFNULL(SUM(subtotal),0) AS total FROM detalles_factura WHERE factura_id = ?', [facturaId]);
-    await conn.query('UPDATE facturas SET total = ?, status = ? WHERE id = ?', [total, status, facturaId]);
+    try {
+      await conn.query('UPDATE facturas SET total = ?, status = ? WHERE id = ?', [total, status, facturaId]);
+    } catch (err) {
+      // Fallback si la columna status no acepta el valor o no existe (enum restringido o esquema antiguo)
+      const msg = String(err?.message || '');
+      if ((err?.code || '').toUpperCase() === 'ER_BAD_FIELD_ERROR' || /Unknown column 'status'/i.test(msg) || /Incorrect enum value/i.test(msg) || /truncated/i.test(msg)) {
+        console.warn('Checkout: no se pudo actualizar status de factura. Se actualizará solo el total. Motivo:', err.code || msg);
+        await conn.query('UPDATE facturas SET total = ? WHERE id = ?', [total, facturaId]);
+      } else {
+        throw err;
+      }
+    }
     // Reflejar estado en la reserva vinculada (si existe)
     try {
       const reservaStatus = status === 'PAGADA' ? 'CONFIRMADA' : (status === 'CANCELADA' ? 'CANCELADA' : 'BORRADOR');

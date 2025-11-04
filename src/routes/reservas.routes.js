@@ -1,3 +1,20 @@
+/**
+ * Rutas de reservas
+ *
+ * Qué incluye:
+ * - Helpers: parseo de fechas y validación de payload de SP.
+ * - POST /api/reservas: crear reserva + factura vía procedimiento almacenado.
+ * - Borradores: crear reserva simple para seleccionar mesa.
+ * - Ensure-factura: garantizar factura BORRADOR para una reserva dada.
+ * - GET /api/reservas/for-day: listar reservas por franja, con items opcionales.
+ * - GET /api/reservas/:id/menu: consolidar items de menú (factura principal + extras).
+ * - PATCH /api/reservas/:id/kitchen: estado de cocina (PENDIENTE|PREPARANDO|LISTO).
+ * - GET /api/reservas/:id: detalle de una reserva.
+ * - GET /api/reservas/:id/factura: resolución de factura asociada.
+ * - PATCH /api/reservas/:id/mesas: actualizar CSV de mesas.
+ * - PATCH /api/reservas/:id/attendance: marcar asistencia.
+ * - PATCH /api/reservas/by-factura/:facturaId/attendance: fallback por factura.
+ */
 import { Router } from "express";
 import { pool } from "../db.js";
 import { parseMySqlSpResponse } from "../utils/parseMySqlSpResponse.js";
@@ -116,11 +133,7 @@ router.post("/api/reservas", async (req, res) => {
   res.status(result.status).json(result.body);
 });
 
-// Stub opcional para compatibilidad con UI antigua de cocina
-// GET /api/ordenes -> retorna [] para evitar 404 si la vista intenta cargarlo
-router.get('/api/ordenes', async (_req, res) => {
-  return res.json([]);
-});
+// Nota: endpoint legacy /api/ordenes eliminado; la UI de cocina usa /api/reservas/:id/menu.
 
 // GET /api/ping-reserva (payload de prueba)
 router.get("/api/ping-reserva", async (req, res) => {

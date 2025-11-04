@@ -1,3 +1,5 @@
+Notas varias / temporales.
+Mover a docs/ si se requiere conservar a largo plazo.
 Nombre (posible): mesaFacil / easyTable 
 
 

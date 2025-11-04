@@ -1,3 +1,14 @@
+/**
+ * Ingredientes (rutas)
+ *
+ * Qué cubre:
+ * - CRUD de ingredientes (nombre, unidad de medida, stock mínimo, activo).
+ * - Ingresos en lote para actualizar stock.
+ * - Listados para interfaz de administración.
+ *
+ * Notas:
+ * - Restringir acceso vía roles (ADMIN) donde corresponda.
+ */
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
