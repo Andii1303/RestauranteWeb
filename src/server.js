@@ -155,9 +155,9 @@ app.get('/favicon.ico', (req, res) => {
 // Servir carpeta public para el resto (después de proteger secciones)
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Redirección raíz directamente a menú cliente
+// Raíz del sitio: servir la página de Inicio del cliente sin redirección visible
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/cliente/menu.html'));
+  res.sendFile(path.join(__dirname, '../public/cliente/index.html'));
 });
 
 // Alias directo explícito (en caso de acceso antes del normalizador)
